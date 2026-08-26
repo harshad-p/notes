@@ -633,3 +633,573 @@ And if those cardinality estimates are wrong, the optimizer can choose an algori
 That's the connection between **statistics → cardinality estimates → execution plans → join algorithms**.
 
 Next I'd move to **SQL Server's memory grants and `tempdb`**, because that explains the deeper mechanics behind things we just mentioned—especially **hash spills, sort spills, why a query can suddenly become extremely slow, and how SQL Server decides how much memory an operation gets**.
+
+# 9. Join algorithms: Nested Loops, Hash Join, and Merge Join
+
+When you write:
+
+```sql
+SELECT *
+FROM Customers c
+JOIN Orders o
+    ON c.Id = o.CustomerId;
+```
+
+you've told SQL Server **what result you want**.
+
+You haven't told it **how to find the matching rows**.
+
+SQL Server's optimizer can choose among several algorithms. The three major ones you should understand are:
+
+- **Nested Loops**
+- **Hash Join**
+- **Merge Join**
+
+The important question isn't "which one is best?"
+
+There isn't one.
+
+The optimizer chooses based largely on things like:
+
+- how many rows it expects from each side
+- whether useful indexes exist
+- whether the inputs are already ordered
+- available memory
+- the cost of sorting or scanning
+- the join predicate
+
+---
+
+# 1. Nested Loops
+
+Let's start with the easiest one.
+
+Imagine:
+
+```text
+Customers:
+
+Id
+---
+10
+20
+30
+```
+
+and:
+
+```text
+Orders:
+
+CustomerId
+----------
+10
+10
+20
+30
+30
+30
+```
+
+A nested-loops join can take one customer at a time and look for matching orders.
+
+It effectively does:
+
+> Take customer 10. Find all orders for customer 10.
+
+Then:
+
+> Take customer 20. Find all orders for customer 20.
+
+Then:
+
+> Take customer 30. Find all orders for customer 30.
+
+The critical question is **how it finds those orders**.
+
+If `Orders.CustomerId` has an index, SQL Server can perform an index seek for each customer.
+
+So if there are only 3 customers:
+
+```text
+Customer 10 → index seek → matching orders
+Customer 20 → index seek → matching orders
+Customer 30 → index seek → matching orders
+```
+
+That's potentially extremely efficient.
+
+---
+
+# 2. Why Nested Loops can become terrible
+
+Now imagine:
+
+```text
+Customers = 5,000,000 rows
+Orders    = 10,000,000 rows
+```
+
+and SQL Server decides to use Nested Loops.
+
+It could potentially perform millions of searches against the other input.
+
+Even if each individual search is reasonably fast, doing it millions of times can become extremely expensive.
+
+So Nested Loops tends to be attractive when **the outer input is relatively small** and the inner input can be searched efficiently.
+
+This is a key sentence to remember:
+
+> **Nested Loops is good when you have relatively few outer rows and an efficient way to find matching inner rows.**
+
+---
+
+# 3. What actually happens internally?
+
+Conceptually, the algorithm is:
+
+```text
+for each row in outer input
+{
+    find matching rows in inner input;
+
+    output the matching combinations;
+}
+```
+
+It doesn't necessarily literally execute a C# `for` loop, of course. That's the algorithmic idea.
+
+If the inner side has an index on the join key, the "find matching rows" operation can be an index seek.
+
+This is why an execution plan might show:
+
+**Nested Loops → Index Seek**
+
+That combination can be perfectly healthy.
+
+---
+
+# 4. Hash Join
+
+Now imagine both tables are large.
+
+Suppose:
+
+```text
+Customers = 10 million
+Orders    = 100 million
+```
+
+There may be no useful index for the join.
+
+Doing a Nested Loops join would potentially require an enormous number of searches.
+
+A Hash Join can solve the problem differently.
+
+Suppose we're joining:
+
+```sql
+Customers.Id = Orders.CustomerId
+```
+
+SQL Server can take one side and build an in-memory **hash table** keyed by the join column.
+
+For example, conceptually, it processes:
+
+```text
+Customer 101
+Customer 205
+Customer 900
+...
+```
+
+and calculates a hash value from each customer's ID.
+
+The hash determines which internal bucket the row belongs to.
+
+The important purpose of that hash isn't that SQL Server "sorts" the customers.
+
+It doesn't.
+
+Instead, hashing gives SQL Server a way to quickly determine:
+
+> "Where should I look for a customer with this particular ID?"
+
+Once that hash structure has been built, SQL Server processes the other input—the orders.
+
+For each order, it takes its `CustomerId`, calculates the corresponding hash, and checks the appropriate bucket for matching customer rows.
+
+So rather than repeatedly searching the entire Customers table, SQL Server can quickly narrow down where the matching rows should be.
+
+---
+
+# 5. Why is it called a Hash Join?
+
+Because the join uses a **hash table** to organize one side of the join.
+
+The important thing is that hashing provides fast lookup based on the join key.
+
+For example, suppose:
+
+```text
+Customer ID = 12345
+```
+
+A hash function transforms that value into a hash value.
+
+SQL Server uses that value to determine the relevant bucket.
+
+It then compares the actual join keys of the candidates in that bucket to make sure they really match.
+
+The hash itself doesn't prove that two values are equal; it narrows down the candidates.
+
+That's an important implementation detail.
+
+Two different values can produce the same hash value—a **hash collision**—so SQL Server still has to compare the actual keys.
+
+---
+
+# 6. Why not always use a Hash Join?
+
+Because building the hash table has a cost.
+
+If you have:
+
+```text
+Customers = 5 rows
+Orders = 10 million rows
+```
+
+building a hash structure just to match five customers may be unnecessary work.
+
+Nested Loops could simply find the five customers' orders through an index.
+
+So Hash Join becomes attractive when you're dealing with **larger inputs** and especially when useful indexes aren't available.
+
+---
+
+# 7. The memory problem with Hash Join
+
+Here's where things get interesting.
+
+The hash table needs memory.
+
+Suppose SQL Server estimates:
+
+```text
+100,000 rows
+```
+
+and allocates an appropriate amount of memory.
+
+But the actual number is:
+
+```text
+20,000,000 rows
+```
+
+The hash table may not fit comfortably in memory.
+
+SQL Server can then use temporary storage, commonly involving `tempdb`, to handle the excess data.
+
+That is called a **hash spill**.
+
+A hash spill can significantly hurt performance.
+
+And now you can see the connection with what we just learned:
+
+**Bad cardinality estimate → inappropriate memory grant / execution strategy → potentially expensive execution.**
+
+This is why I wanted you to understand cardinality estimation before diving deeper into join algorithms.
+
+---
+
+# 8. Merge Join
+
+The third major algorithm is Merge Join.
+
+Merge Join has a very different requirement:
+
+> **Both inputs need to be ordered by the join key.**
+
+Suppose we have:
+
+```text
+Customers:
+10
+20
+30
+40
+```
+
+and:
+
+```text
+Orders.CustomerId:
+10
+10
+20
+30
+30
+40
+```
+
+Because both inputs are ordered, SQL Server can walk through them together.
+
+It doesn't need to repeatedly search the orders table.
+
+It also doesn't need to build a hash table.
+
+It essentially advances through the two ordered inputs and compares the current keys.
+
+If the keys match, it produces the joined rows.
+
+If one key is smaller than the other, it advances the side with the smaller key.
+
+For example:
+
+```text
+Customer: 20
+Order:    10
+```
+
+The order's key is smaller, so SQL Server advances the orders input.
+
+Then:
+
+```text
+Customer: 20
+Order:    20
+```
+
+They match.
+
+It produces the result and continues.
+
+---
+
+# 9. Why would the inputs already be ordered?
+
+Indexes are one reason.
+
+Suppose you have an index that provides rows ordered by:
+
+```text
+Orders.CustomerId
+```
+
+SQL Server may be able to read that index in the required order.
+
+Similarly, a clustered index can provide ordering based on its key.
+
+If both sides are already suitably ordered, Merge Join can be very efficient.
+
+If they aren't ordered, SQL Server might need to sort them first.
+
+And that can completely change whether Merge Join is attractive.
+
+---
+
+# 10. Comparing the three
+
+Now the differences should make more sense:
+
+| Algorithm | Basic idea | Often attractive when |
+|---|---|---|
+| **Nested Loops** | Find matches for each outer row | Small outer input + useful index |
+| **Hash Join** | Build a hash structure and probe it | Large inputs, especially without useful indexes |
+| **Merge Join** | Walk two already-sorted inputs together | Both inputs already ordered by join key |
+
+Don't memorize those as absolute rules.
+
+They're **tendencies**, not laws.
+
+---
+
+# 11. A really important example
+
+Suppose SQL Server estimates:
+
+```text
+Customers: 10 rows
+Orders: 10 million rows
+```
+
+and `Orders.CustomerId` has a good index.
+
+Nested Loops is very attractive:
+
+```text
+10 customers
+×
+indexed search
+```
+
+Now suppose SQL Server estimates:
+
+```text
+Customers: 5 million rows
+Orders: 10 million rows
+```
+
+Nested Loops suddenly looks much less attractive.
+
+A Hash Join might be better.
+
+Or if both sides are already ordered appropriately, Merge Join could be attractive.
+
+**The estimated row count can therefore change the join algorithm.**
+
+This is exactly why inaccurate statistics can cause performance problems.
+
+---
+
+# 12. What happens if SQL Server chooses the wrong join?
+
+Suppose the actual situation is:
+
+```text
+Outer table = 5 million rows
+```
+
+but SQL Server estimates:
+
+```text
+Outer table = 20 rows
+```
+
+It might choose Nested Loops because 20 rows sounds cheap.
+
+But then execution begins and there are actually millions of rows.
+
+Now SQL Server may have to perform a huge number of inner operations.
+
+The join algorithm itself isn't necessarily defective.
+
+The optimizer made a decision based on a bad estimate.
+
+This is one of the most useful connections between the topics we've covered:
+
+> **Statistics influence cardinality estimates. Cardinality estimates influence the optimizer's choice of join algorithm. The join algorithm can have a huge impact on runtime.**
+
+---
+
+# 13. Join order matters too
+
+This is another detail that's easy to overlook.
+
+Suppose you have:
+
+```sql
+A
+JOIN B
+JOIN C
+JOIN D
+```
+
+SQL Server doesn't necessarily join them in the order you wrote them.
+
+It can determine that a different order is cheaper.
+
+For example, suppose:
+
+```text
+A → 10 million rows
+B → 5 million rows
+C → 20 rows
+D → 2 million rows
+```
+
+If joining A with C immediately reduces the result dramatically, SQL Server may prefer that strategy.
+
+The optimizer is essentially searching through possible execution strategies and trying to find a low-cost plan.
+
+With more tables, the number of possible combinations grows rapidly, which is one reason query optimization is a complex problem.
+
+---
+
+# 14. A subtle point: joins don't necessarily mean "load both tables"
+
+When you write:
+
+```sql
+SELECT ...
+FROM Customers c
+JOIN Orders o
+    ON c.Id = o.CustomerId
+```
+
+SQL Server doesn't necessarily read every row from both tables.
+
+Depending on the predicates and chosen plan, it may be able to eliminate huge portions of the data early.
+
+For example:
+
+```sql
+WHERE c.Id = 123
+```
+
+could make a Nested Loops strategy extremely efficient:
+
+1. Find customer 123.
+2. Use `Orders.CustomerId` index to find that customer's orders.
+3. Return the results.
+
+It doesn't need to scan all 10 million orders.
+
+This is another reason indexes on foreign-key/join columns can matter.
+
+---
+
+# 15. One more important concept: physical vs logical join
+
+Your SQL expresses a **logical join**:
+
+```sql
+A JOIN B ON A.Id = B.AId
+```
+
+That's the relational operation you want.
+
+The physical implementation might be:
+
+- Nested Loops
+- Hash Join
+- Merge Join
+
+The optimizer is free to choose the physical implementation as long as it produces the correct result.
+
+This is analogous to what we discussed earlier:
+
+> Your SQL describes **what** you want; the execution plan describes **how SQL Server will obtain it**.
+
+---
+
+## The mental model I want you to have
+
+When you see a join in an execution plan, don't immediately think:
+
+> "Hash Join = bad"  
+> "Nested Loops = good"
+
+Instead ask:
+
+**What are the estimated row counts?**
+
+**Are the inputs indexed?**
+
+**Are they already ordered?**
+
+**How many times will the inner side be accessed?**
+
+**Does the hash table fit in memory?**
+
+**Are the actual row counts close to the estimates?**
+
+That lets you reason about *why* SQL Server chose the algorithm instead of memorizing rules.
+
+### One particularly useful thing to learn next
+
+The next level after this is **memory grants and `tempdb`**—because that's where Hash Joins, Sorts, spills, large aggregations, and some seemingly mysterious SQL Server performance problems start to make sense.
+
+It's a deeper topic, but it ties directly into what we've just learned, so I recommend doing that next.
