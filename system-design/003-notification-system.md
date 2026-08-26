@@ -1,8 +1,4 @@
-Exactly. Breaking things down is useful; **repeating the same concept from slightly different angles isn't**. I'll keep the depth, but make each step earn its place.
-
-And since the role is platform-heavy, I'd actually make the next problem a little more relevant than a generic REST API:
-
-## System Design #3 — Design a scalable notification system
+# System Design #3 — Design a scalable notification system
 
 This is a good exercise because it introduces several classic distributed-system concepts without being tied to REST:
 
