@@ -1,6 +1,4 @@
-Perfect. We'll do **Real Estate Property Search & Listing Platform** and follow your exact framework, step by step.
-
-We’ll stay in **interview mode**: I’ll phrase things as you would actually say them to the interviewer, rather than turning it into a lesson. We won't jump ahead to Redis/Kafka/microservices until there's a requirement that justifies them.
+# Real Estate Property Search & Listing Platform
 
 ## Step 1 — Clarify requirements
 
