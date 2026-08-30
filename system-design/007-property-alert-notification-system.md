@@ -832,10 +832,6 @@ With retries and dead-letter queues associated with the notification queues.
 >
 > **"The main trade-off is that this design favors scalability and availability and accepts eventual consistency. The additional queues and asynchronous processing make the system more resilient to spikes and external-provider failures, but they also introduce more operational complexity."**
 
-Yes. The phrase **"design the keys and indexes around the queries we need"** is much more important in NoSQL than it might initially sound.
-
-Let's use our **saved-search system** and go through what actually happens.
-
 ## 1. What is an access pattern?
 
 An **access pattern is simply a way the application needs to retrieve or modify data**.
