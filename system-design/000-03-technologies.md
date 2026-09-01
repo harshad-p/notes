@@ -270,3 +270,39 @@ And for **your interview specifically**, I would make sure you can explain the d
 **SQL vs NoSQL → Redis → RabbitMQ vs Kafka → Elasticsearch → Load Balancer → Docker/Kubernetes → Object Storage → Observability.**
 
 Those are much more valuable than memorizing dozens of product names.
+
+| Category | Azure | AWS |
+|---|---|---|
+| **Object Storage** | Blob Storage | S3 |
+| **Virtual Machines** | Virtual Machines | EC2 |
+| **Containers** | Container Instances | ECS / Fargate |
+| **Kubernetes** | AKS | EKS |
+| **Serverless Functions** | Azure Functions | Lambda |
+| **SQL Database** | Azure SQL Database | RDS / Aurora |
+| **NoSQL / Key-Value** | Cosmos DB | DynamoDB |
+| **Cache** | Azure Cache for Redis | ElastiCache for Redis |
+| **Message Queue** | Azure Service Bus | SQS |
+| **Event Streaming** | Event Hubs | Kinesis |
+| **Event Streaming / Kafka** | Azure Event Hubs for Kafka | Amazon MSK |
+| **Pub/Sub Messaging** | Event Grid | SNS |
+| **Search** | Azure AI Search | OpenSearch Service |
+| **Load Balancer** | Azure Load Balancer | Elastic Load Balancing (ELB) |
+| **Application Load Balancer** | Application Gateway | Application Load Balancer (ALB) |
+| **CDN** | Azure Front Door | CloudFront |
+| **DNS** | Azure DNS | Route 53 |
+| **API Gateway** | API Management | API Gateway |
+| **Monitoring** | Azure Monitor | CloudWatch |
+| **Logging / Tracing** | Application Insights | X-Ray / CloudWatch |
+| **Identity** | Microsoft Entra ID | IAM / Cognito |
+| **Secrets** | Key Vault | Secrets Manager |
+| **Container Registry** | Azure Container Registry (ACR) | Elastic Container Registry (ECR) |
+| **DevOps / CI/CD** | Azure DevOps | CodePipeline / CodeBuild / CodeDeploy |
+| **Infrastructure as Code** | ARM / Bicep | CloudFormation |
+| **Managed Kafka** | Event Hubs for Kafka | MSK |
+| **Data Warehouse** | Synapse Analytics | Redshift |
+| **Data Lake** | Data Lake Storage | S3 + Lake Formation |
+| **Workflow / Orchestration** | Logic Apps | Step Functions |
+| **Email** | Azure Communication Services | SES |
+
+**For your interview, the ones I'd know cold are:**  
+**Azure SQL ↔ RDS/Aurora, Cosmos DB ↔ DynamoDB, Blob ↔ S3, Redis ↔ ElastiCache, Service Bus ↔ SQS, Event Hubs ↔ Kinesis, AKS ↔ EKS, Functions ↔ Lambda, Application Gateway ↔ ALB, Front Door ↔ CloudFront, API Management ↔ API Gateway, Key Vault ↔ Secrets Manager, Azure Monitor ↔ CloudWatch.**
