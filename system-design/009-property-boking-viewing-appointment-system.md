@@ -1,11 +1,3 @@
-Let's do **Property Booking / Viewing Appointment System**.
-
-We'll use the same structure you finalized earlier: **requirements → data → database → API → simple architecture → asynchronous work → caching → scale/availability → reliability → observability → evolution/trade-offs**.
-
-And I'll stay in **interview mode**, not teaching mode. Any reasoning/tips I want you to notice will be in parentheses.
-
----
-
 # Property Viewing Appointment System
 
 **Interviewer:**
@@ -407,11 +399,11 @@ Suppose the API becomes heavily loaded.
 I'd add multiple API servers:
 
 ```text
-                    ┌── API Server 1 ──┐
+                       ┌── API Server 1 ──┐
 Client → Load Balancer ├── API Server 2 ──┤
-                    └── API Server 3 ──┘
-                              ↓
-                         SQL Database
+                       └── API Server 3 ──┘
+                                ↓
+                           SQL Database
 ```
 
 The load balancer distributes requests across the API servers.
