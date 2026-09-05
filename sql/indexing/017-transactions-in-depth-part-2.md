@@ -1,6 +1,6 @@
 # Transactions in Depth — Part 2: Concurrency & Isolation
 
-The next important piece is **what happens when multiple requests try to read or modify the same data at the same time**. This is also directly relevant to the interview question you were asked about ensuring consistency when the same DB row is updated.
+The next important piece is **what happens when multiple requests try to read or modify the same data at the same time**. 
 
 ## 1. The classic problem: two requests update the same row
 
