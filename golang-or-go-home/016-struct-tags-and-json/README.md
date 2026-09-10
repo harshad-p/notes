@@ -90,6 +90,8 @@ type User struct {
 
 If `Email == ""`, the JSON won't contain `email` at all.
 
+(No space between `email,omitempty`)
+
 ---
 
 ## Exercise
