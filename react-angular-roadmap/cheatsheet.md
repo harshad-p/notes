@@ -1,3 +1,5 @@
+- JavaScript is a general-purpose programming language.
+- ECMAScript is the standard defining the language.
 - V8: JavaScript engine
 - Node and browser provide different features: localStorage, fetch, Buffer, etc.
 - Execution context: The environment in which the code executes
