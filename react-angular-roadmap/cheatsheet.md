@@ -1,0 +1,5 @@
+- V8: JavaScript engine
+- Node and browser provide different features: localStorage, fetch, Buffer, etc.
+- Execution context: The environment in which the code executes
+- JS is synchronous
+- const prevents reassignment of the variable. It doesn't prevent mutation of the object. 
