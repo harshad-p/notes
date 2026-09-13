@@ -2585,3 +2585,589 @@ Global viewers
 At this point we have a fairly serious YouTube architecture.
 
 The next natural pressure point is **video upload itself**: uploading a multi-GB file, resumable uploads, transcoding, processing failures, multiple resolutions, and how we make sure the API servers aren't handling the actual video bytes. That's still completely within our YouTube design.
+
+## YouTube — Video Upload Pipeline
+
+### Interviewer:
+> Let's talk about uploading a video. A user might upload a 5 GB or 20 GB video. How would you design that?
+
+### Candidate:
+
+I wouldn't send the entire video through our API servers.
+
+The API should handle **metadata and coordination**, while the actual video bytes should go directly to object storage.
+
+So instead of:
+
+```text
+Client → API Server → Object Storage
+```
+
+I'd use:
+
+```text
+Client → API
+          |
+          | create upload
+          v
+      Upload URL
+          |
+          v
+Client → Object Storage
+```
+
+The API never has to hold the 20 GB file in memory or proxy all those bytes.
+
+---
+
+## 1. Start the upload
+
+The client calls:
+
+```http
+POST /videos
+```
+
+with metadata such as:
+
+```json
+{
+  "title": "My Berlin Trip",
+  "description": "..."
+}
+```
+
+The API creates a video record:
+
+```text
+Video
+------------------------
+Id
+ChannelId
+Title
+Description
+Status = UPLOADING
+CreatedAt
+```
+
+Then it generates an upload authorization mechanism, typically a **pre-signed URL** or multipart/resumable-upload session for object storage.
+
+The API returns something like:
+
+```json
+{
+  "videoId": "123",
+  "uploadUrl": "..."
+}
+```
+
+---
+
+## 2. Upload directly to object storage
+
+The client now uploads the actual file directly:
+
+```text
+Client
+   |
+   | 5 GB video
+   v
+Object Storage
+```
+
+The API isn't involved in transferring those 5 GB.
+
+That's important because API servers are designed for request processing, not massive file transfer.
+
+---
+
+# 3. What if the upload fails at 80%?
+
+We don't want the user to restart 5 GB from zero.
+
+So I'd support **resumable/multipart uploads**.
+
+Conceptually:
+
+```text
+5 GB file
+
++---------+---------+---------+---------+
+| Part 1  | Part 2  | Part 3  | Part 4  |
++---------+---------+---------+---------+
+    ✓          ✓          ✗          ✓
+```
+
+The client can retry only Part 3.
+
+This is particularly important for users on unstable or slow connections.
+
+---
+
+# 4. How do we know the upload is complete?
+
+The object-storage upload mechanism can provide completion information.
+
+The client can then tell our API:
+
+```http
+POST /videos/123/upload-complete
+```
+
+Or object storage can emit an event when the object is successfully created.
+
+I prefer an **event-driven approach** at large scale:
+
+```text
+Client
+  |
+  v
+Object Storage
+  |
+  | ObjectCreated event
+  v
+Upload Processing
+```
+
+The processing system verifies that the expected object exists and then starts the next stage.
+
+---
+
+# 5. Transcoding
+
+We can't serve the original 5 GB file directly to every viewer.
+
+A user might have:
+
+- a slow mobile connection
+- a 1080p display
+- a 4K display
+- limited bandwidth
+
+So we need multiple representations.
+
+```text
+Original Video
+      |
+      v
+ Transcoding
+      |
+      +---- 360p
+      +---- 480p
+      +---- 720p
+      +---- 1080p
+      +---- 1440p
+      +---- 4K
+```
+
+And increasingly, we're not just producing one giant file per resolution.
+
+We split the video into **small segments**.
+
+For example:
+
+```text
+1080p
+
+segment-001
+segment-002
+segment-003
+segment-004
+...
+```
+
+This allows the player to request only the portions it needs.
+
+---
+
+# 6. Why segments matter
+
+Suppose you're watching:
+
+> 45:00 of a 60-minute video.
+
+We don't want:
+
+```text
+Download entire 60-minute video
+```
+
+Instead:
+
+```text
+Player
+  |
+  +-- segment 001
+  +-- segment 002
+  +-- segment 003
+  ...
+  +-- segment 045
+```
+
+The player can also switch quality dynamically.
+
+For example:
+
+```text
+Good network
+
+1080p → 1080p → 1080p
+```
+
+Then the connection gets worse:
+
+```text
+1080p → 720p → 720p
+```
+
+Then improves:
+
+```text
+720p → 1080p
+```
+
+This is the basic idea behind **adaptive bitrate streaming**.
+
+---
+
+# 7. Where does the CDN fit?
+
+After transcoding:
+
+```text
+Object Storage
+      |
+      v
+CDN
+```
+
+The CDN caches frequently requested video segments.
+
+So a viewer in Germany doesn't need to retrieve every segment from some distant origin.
+
+Instead:
+
+```text
+                    Object Storage
+                         |
+                         v
+                        CDN
+                   /     |      \
+                  /      |       \
+                 v       v        v
+               EU      US       Asia
+             viewers  viewers  viewers
+```
+
+Popular video segments can be served from edge locations close to viewers.
+
+This is where we get the huge global-scale benefit from the CDN.
+
+---
+
+# 8. Processing shouldn't block the upload request
+
+We shouldn't do:
+
+```text
+POST /videos
+
+Upload
+  ↓
+Transcode
+  ↓
+Generate thumbnails
+  ↓
+Analyze video
+  ↓
+Return response
+```
+
+That could take minutes or longer.
+
+Instead:
+
+```text
+POST /videos
+     |
+     v
+Create metadata
+     |
+     v
+Return upload information
+```
+
+Then asynchronously:
+
+```text
+Object Storage
+      |
+      v
+Upload event
+      |
+      v
+Processing Queue
+      |
+      +---- Transcoding
+      |
+      +---- Thumbnail generation
+      |
+      +---- Metadata extraction
+      |
+      +---- Content processing
+```
+
+Each processing step can scale independently.
+
+---
+
+# 9. What if transcoding fails?
+
+This is where the queue design we discussed earlier becomes useful.
+
+For example:
+
+```text
+Upload Queue
+     |
+     v
+Transcoding Worker
+     |
+     X failure
+     |
+     v
+Retry
+     |
+     X failure
+     |
+     v
+Retry
+     |
+     X failure
+     |
+     v
+Dead Letter Queue
+```
+
+We'd use:
+
+- retries
+- exponential backoff
+- maximum retry count
+- dead-letter queue
+
+The video record can reflect its state:
+
+```text
+UPLOADING
+     ↓
+PROCESSING
+     ↓
+READY
+```
+
+or:
+
+```text
+PROCESSING
+     ↓
+FAILED
+```
+
+The client can query:
+
+```http
+GET /videos/123
+```
+
+and receive:
+
+```json
+{
+  "id": "123",
+  "title": "My Berlin Trip",
+  "status": "PROCESSING"
+}
+```
+
+Eventually:
+
+```json
+{
+  "id": "123",
+  "title": "My Berlin Trip",
+  "status": "READY"
+}
+```
+
+---
+
+# 10. We should also think about duplicate processing
+
+Imagine the object-storage event is delivered twice:
+
+```text
+ObjectCreated(video-123)
+ObjectCreated(video-123)
+```
+
+We don't want to transcode the same 5 GB video twice unnecessarily.
+
+So processing should be **idempotent**.
+
+For example, the processing job can have:
+
+```text
+VideoId = 123
+ProcessingVersion = 1
+```
+
+and workers can check whether that processing version has already completed.
+
+(Exactly-once delivery is difficult in distributed systems; it's generally safer to assume events may be delivered more than once and make consumers idempotent.)
+
+---
+
+# 11. What about thumbnails?
+
+We can generate them asynchronously from the uploaded video.
+
+```text
+Original
+   |
+   +---- Transcoding
+   |
+   +---- Thumbnail generation
+   |
+   +---- Other processing
+```
+
+The thumbnails are also stored in object storage and served through the CDN.
+
+So when search results display:
+
+```text
+[thumbnail] My Berlin Trip
+```
+
+the thumbnail itself doesn't need to come from the SQL database.
+
+SQL contains something like:
+
+```text
+ThumbnailUrl / ThumbnailKey
+```
+
+while the actual image lives in object storage/CDN.
+
+---
+
+# Our upload architecture now looks like this
+
+```text
+                         Creator
+                            |
+                            | POST /videos
+                            v
+                      YouTube API
+                            |
+                    Create video metadata
+                            |
+                            v
+                    SQL: UPLOADING
+                            |
+                            v
+                     Upload URL
+                            |
+                            |
+Creator -------------------+
+   |
+   | actual video bytes
+   v
+Object Storage
+   |
+   | upload event
+   v
+Processing Queue
+   |
+   +------------------+
+   |                  |
+   v                  v
+Transcoding       Thumbnail
+ Workers           Workers
+   |                  |
+   +--------+---------+
+            |
+            v
+      Processed Video
+            |
+            v
+      Object Storage
+            |
+            v
+           CDN
+            |
+            v
+         Viewers
+```
+
+And importantly, **SQL remains relatively small**:
+
+```text
+SQL
+ ├── VideoId
+ ├── ChannelId
+ ├── Title
+ ├── Description
+ ├── Status
+ ├── timestamps
+ └── references/keys to stored assets
+```
+
+It does **not** contain the 5 GB video.
+
+---
+
+### Interviewer:
+> What happens if millions of creators upload videos at the same time?
+
+Now we have another YouTube-specific scaling problem.
+
+We don't want:
+
+```text
+1 million uploads
+       ↓
+1 million transcoding jobs
+       ↓
+100 workers
+       ↓
+everything overloaded
+```
+
+The queue gives us **backpressure**.
+
+Uploads can complete and wait in the queue while transcoding workers process jobs at the rate the infrastructure can handle.
+
+And because transcoding is CPU/GPU intensive, we can scale those workers independently from the API servers.
+
+That gives us another important separation:
+
+```text
+API capacity       ≠       Transcoding capacity
+```
+
+A spike in uploads shouldn't necessarily take down:
+
+- video metadata APIs
+- search
+- comments
+- playback authorization
+
+because the expensive processing work is isolated behind the queue.
+
+---
+
+So our YouTube design now covers **upload → object storage → asynchronous processing → transcoding → CDN playback**, including failures and scaling.
+
+The next pressure point inside the same design is **playback itself**: how the player gets the right video segments, how CDN caching works for billions of views, what happens when a video suddenly goes viral, and how we prevent the origin/object storage from being overwhelmed.
