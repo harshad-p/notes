@@ -2087,3 +2087,501 @@ The important question for YouTube becomes:
 That's the next thing I'd tackle, because the answer isn't simply "shard by UserId." Different YouTube workloads—videos, comments, channels, views, likes, search—have different access patterns.
 
 And that takes us deeper into the **YouTube design itself**, not into a generic database lesson.
+
+## YouTube — Sharding the Data
+
+### Interviewer:
+> You have one SQL primary. At YouTube scale, how would you prevent it from becoming a bottleneck?
+
+### Candidate:
+
+I would introduce **sharding**, but I wouldn't shard the entire YouTube database using one universal key.
+
+Different parts of YouTube have different access patterns, so I'd first separate the major workloads.
+
+We have:
+
+- Users / channels
+- Videos
+- Comments
+- Likes
+- View events
+- Video metadata
+- Recommendations
+- Search
+
+The shard key should be chosen based on **how that data is accessed**, not simply because one column is convenient.
+
+---
+
+### 1. Users and channels
+
+For user-related data, `UserId` is a reasonable starting point.
+
+```text
+             User data
+                 |
+       +---------+---------+
+       |         |         |
+    Shard 1   Shard 2   Shard 3
+    A-F       G-M       N-Z
+```
+
+But in practice I'd probably use **hash-based partitioning** rather than literal alphabetical ranges.
+
+For example:
+
+```text
+hash(UserId) → logical partition → physical shard
+```
+
+This distributes users more evenly.
+
+A user generally accesses their own:
+
+- profile
+- subscriptions
+- settings
+- channel information
+
+So keeping user-related data together can be useful.
+
+---
+
+# 2. Videos are more interesting
+
+A video belongs to a channel:
+
+```text
+Video
+  |
+  +-- ChannelId
+```
+
+We could shard videos using `ChannelId`.
+
+That means:
+
+```text
+Channel A
+   |
+   +-- Video 1
+   +-- Video 2
+   +-- Video 3
+```
+
+would generally be colocated.
+
+That's useful for queries such as:
+
+```http
+GET /channels/{channelId}/videos
+```
+
+because we know which shard to query.
+
+But there's a problem.
+
+Imagine Taylor Swift uploads thousands of videos.
+
+Or, more importantly, imagine an enormous channel generating huge amounts of traffic.
+
+Now one shard could become a **hot shard**.
+
+So the shard key isn't just about distributing storage.
+
+It must distribute **traffic and workload**.
+
+---
+
+# 3. Comments
+
+Comments have a different access pattern.
+
+The common query is:
+
+```http
+GET /videos/{videoId}/comments
+```
+
+So `VideoId` is a natural partitioning key.
+
+```text
+Video 123
+   |
+   +-- Comment 1
+   +-- Comment 2
+   +-- Comment 3
+   +-- ...
+```
+
+But again, YouTube has extremely popular videos.
+
+Suppose one video receives:
+
+> 10 million comments.
+
+Putting all those comments into one partition could create a hotspot.
+
+So we might partition comments using something like:
+
+```text
+hash(VideoId, CommentBucket)
+```
+
+where the bucket can divide one extremely popular video's comments across multiple partitions.
+
+For example:
+
+```text
+Video 123
+   |
+   +-- Bucket 0
+   +-- Bucket 1
+   +-- Bucket 2
+   +-- Bucket 3
+```
+
+(The important principle is that a shard key needs to prevent **hotspots**, not merely distribute rows.)
+
+---
+
+# 4. Likes
+
+Likes have a particularly useful uniqueness requirement.
+
+We want:
+
+```text
+one user
++
+one video
+=
+one active like
+```
+
+So we'd have something conceptually like:
+
+```text
+VideoLike
+----------------
+VideoId
+UserId
+CreatedAt
+```
+
+with a unique constraint on:
+
+```text
+(VideoId, UserId)
+```
+
+This gives us a reliable way to prevent:
+
+```text
+User 42 likes Video 123
+User 42 likes Video 123 again
+```
+
+from creating two active likes.
+
+But we **don't** want every like to synchronously update:
+
+```text
+Videos.LikeCount
+```
+
+because a hugely popular video could become a hot row.
+
+Instead:
+
+```text
+User
+ |
+ v
+Like API
+ |
+ v
+Authoritative Like State
+ |
+ v
+Event
+ |
+ v
+Aggregation
+ |
+ v
+LikeCount
+```
+
+So:
+
+```text
+UserLike
+```
+
+is correctness-sensitive.
+
+Whereas:
+
+```text
+LikeCount
+```
+
+is a derived value and can be eventually consistent.
+
+---
+
+# 5. Views
+
+Views are even more different.
+
+We don't want:
+
+```sql
+UPDATE Videos
+SET ViewCount = ViewCount + 1
+WHERE VideoId = 123;
+```
+
+for every view.
+
+Imagine a popular video receiving hundreds of thousands of views per second.
+
+That would turn one database row into a massive contention point.
+
+Instead:
+
+```text
+Users
+  |
+  v
+Playback
+  |
+  v
+View Events
+  |
+  v
+Event Stream
+  |
+  +--------+--------+
+  |        |        |
+  v        v        v
+Aggregation / Analytics / Recommendations
+  |
+  v
+Aggregated View Count
+```
+
+This is one of the biggest architectural differences between:
+
+**transactional state**
+
+and
+
+**high-volume events**.
+
+A view doesn't need to synchronously modify the video's canonical row.
+
+---
+
+# So our YouTube data isn't all in one giant sharded SQL database
+
+This is the important architectural realization.
+
+Instead, we might have something more like:
+
+```text
+                         YouTube
+                            |
+        +-------------------+-------------------+
+        |                   |                   |
+        v                   v                   v
+   User/Channel         Video Metadata       Comments
+      SQL                  SQL                  SQL
+    sharded               sharded              sharded
+        |                   |                   |
+        +-------------------+-------------------+
+                            |
+                       Event System
+                            |
+                +-----------+-----------+
+                |           |           |
+              Views       Likes    Recommendations
+```
+
+And then separately:
+
+```text
+                    Video Files
+                        |
+                 Object Storage
+                        |
+                       CDN
+```
+
+And:
+
+```text
+                    Search
+                      |
+               Search Index
+```
+
+(I'm intentionally separating these because **YouTube doesn't have one database that does everything**. Different workloads need different storage/access patterns.)
+
+---
+
+# One more important problem: cross-shard queries
+
+Suppose the homepage needs:
+
+> "Give me 20 recommended videos for this user."
+
+We don't want:
+
+```text
+Query Shard 1
+Query Shard 2
+Query Shard 3
+...
+Query Shard 100
+```
+
+and then combine everything synchronously.
+
+That would be terrible for latency.
+
+Instead, recommendations should already be prepared using the event/analytics pipeline.
+
+Something like:
+
+```text
+Views
+Likes
+Watch history
+Subscriptions
+Search history
+       |
+       v
+Recommendation processing
+       |
+       v
+User 123 → [Video 91, Video 72, Video 381, ...]
+```
+
+Then:
+
+```http
+GET /users/me/feed
+```
+
+can retrieve a relatively small precomputed result.
+
+This is another recurring YouTube principle:
+
+> **Don't make the online request perform expensive global computation if you can precompute the result.**
+
+---
+
+# Our architecture is now evolving
+
+We started with:
+
+```text
+Client
+  |
+  v
+API
+  |
+  v
+SQL
+```
+
+Then:
+
+```text
+Client
+  |
+  v
+API
+  |
+  +---- SQL
+  |
+  +---- Object Storage
+```
+
+Then:
+
+```text
+Client
+  |
+  +---- API → SQL
+  |
+  +---- CDN → Object Storage
+```
+
+Then:
+
+```text
+                         Client
+                        /      \
+                       /        \
+                      v          v
+                    API         CDN
+                     |            |
+                     v            v
+                  SQL          Video Files
+                   |
+             +-----+-----+
+             |     |     |
+            EU     US   Asia
+          replicas primary replicas
+```
+
+Then at larger scale:
+
+```text
+                         YouTube
+                            |
+        +-------------------+-------------------+
+        |                   |                   |
+        v                   v                   v
+   User/Channel         Video Metadata       Comments
+      Shards               Shards             Shards
+        |                   |                   |
+        +-------------------+-------------------+
+                            |
+                       Event Stream
+                            |
+              +-------------+-------------+
+              |             |             |
+            Views         Likes      Recommendations
+```
+
+And the **video bytes themselves remain outside SQL**:
+
+```text
+Upload
+   |
+   v
+Object Storage
+   |
+   v
+Transcoding
+   |
+   +-- 360p
+   +-- 720p
+   +-- 1080p
+   +-- 4K
+   |
+   v
+CDN
+   |
+   v
+Global viewers
+```
+
+At this point we have a fairly serious YouTube architecture.
+
+The next natural pressure point is **video upload itself**: uploading a multi-GB file, resumable uploads, transcoding, processing failures, multiple resolutions, and how we make sure the API servers aren't handling the actual video bytes. That's still completely within our YouTube design.
