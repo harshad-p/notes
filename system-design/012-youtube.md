@@ -422,3 +422,354 @@ We now have the fundamental question:
 > **When should we use one primary + regional read replicas, and when do we actually need multiple writable database regions?**
 
 We'll tackle that next rather than glossing over it, because that distinction is at the heart of globally distributed SQL systems.
+
+### Continuing the YouTube design
+
+**Interviewer:** *Do we really need multiple writable SQL databases around the world?*
+
+**Me:**
+
+> Not necessarily. I would first ask whether our workload actually requires writes to happen locally in every region.
+
+For YouTube, the majority of traffic is **read traffic**. Video playback, video metadata, search, recommendations, comments and similar operations generate enormous numbers of reads compared with writes.
+
+So I'd start with:
+
+```text
+                    Primary SQL
+                   /     |      \
+                  /      |       \
+              EU Read   US Read   Asia Read
+              Replica   Replica   Replica
+```
+
+Writes go to the primary, while geographically close replicas handle most reads.
+
+This is considerably simpler than having multiple writable databases.
+
+---
+
+## But what if the primary is in the US?
+
+**Interviewer:** *Wouldn't a creator in India have high latency when uploading or updating a video?*
+
+**Me:**
+
+> The write itself could have higher latency if it has to travel to the primary, but I wouldn't put the video upload through the SQL database anyway.
+
+The large video upload goes directly to object storage.
+
+For metadata writes, we're talking about relatively small requests.
+
+If write latency becomes a significant problem, then we can consider a more distributed write architecture.
+
+But I wouldn't introduce multi-primary writes merely because users are geographically distributed.
+
+(I want to optimize based on the actual workload rather than assuming every piece of data must have a local writable copy.)
+
+---
+
+# 11. When would we actually need multiple writable regions?
+
+Suppose YouTube has users in Europe, Asia and North America, and we discover that metadata writes are also enormous and users require very low write latency.
+
+Now we could consider:
+
+```text
+       Europe              USA                Asia
+         |                  |                   |
+      SQL DB             SQL DB              SQL DB
+         \                  |                  /
+          \_________________|_________________/
+                    Replication
+```
+
+Now all three regions can accept writes.
+
+But we've introduced a **much harder problem**.
+
+What happens if two regions modify the same piece of data at approximately the same time?
+
+For example:
+
+```text
+Europe: title = "A"
+Asia:   title = "B"
+```
+
+Which one wins?
+
+We now need conflict resolution or a mechanism that coordinates the writes.
+
+That's why **multi-primary/multi-writer databases are significantly more complicated** than primary + read replicas.
+
+---
+
+# 12. So what would I choose for YouTube?
+
+I'd actually partition the problem by **type of data**.
+
+For example:
+
+| Data | Likely architecture |
+|---|---|
+| Video files | Object storage + CDN |
+| Video metadata | Primary SQL + regional read replicas |
+| Comments | SQL/sharded DB + replicas |
+| Likes/views | Specialized high-write/event architecture |
+| Recommendations | Distributed processing + caches |
+| Search index | Globally distributed search infrastructure |
+
+This is important because **"the database" isn't necessarily one database anymore.**
+
+Different workloads can have different storage architectures.
+
+---
+
+# 13. But there's another scaling problem: one SQL primary
+
+Let's say YouTube has:
+
+- 1 billion daily users
+- enormous read traffic
+- millions of metadata writes per second
+
+Even if reads are distributed to replicas, eventually the primary could become a bottleneck for writes.
+
+At that point I'd consider **sharding**.
+
+Instead of:
+
+```text
+             One giant SQL DB
+            /      |       \
+        Users    Videos   Comments
+```
+
+we could partition the data:
+
+```text
+Shard 1
+Users/Videos A-H
+
+Shard 2
+Users/Videos I-P
+
+Shard 3
+Users/Videos Q-Z
+```
+
+But the exact partitioning strategy depends on the access patterns.
+
+For example, we might shard based on `UserId`, `ChannelId`, or another suitable key.
+
+---
+
+# 14. Geographic partitioning vs replication
+
+This distinction is **really important**.
+
+Suppose we say:
+
+> "Europe's database contains European users and Asia's database contains Asian users."
+
+That's **partitioning**.
+
+The data isn't duplicated. Different regions own different portions of the data.
+
+Whereas:
+
+```text
+Primary
+   |
+   +---- Replica EU
+   |
+   +---- Replica Asia
+```
+
+means the **same data is duplicated** across regions.
+
+That's **replication**.
+
+And we can combine the two.
+
+For example:
+
+> Shard the global dataset into multiple logical partitions, and replicate each partition to multiple regions.
+
+That's how systems can become extremely large without requiring every database node to contain the entire world's data.
+
+---
+
+# 15. Now let's return to YouTube's most important read path
+
+A user in Germany watches a video.
+
+The request might conceptually look like:
+
+```text
+User in Germany
+       |
+       v
+Global traffic routing
+       |
+       v
+European API
+       |
+       +----> EU cache / metadata replica
+       |
+       +----> CDN
+                |
+                v
+          Video segments
+```
+
+The SQL database may not even participate in the actual video playback.
+
+The metadata might come from a nearby replica or cache.
+
+The video itself comes from a nearby CDN edge.
+
+This is why YouTube can serve the same popular video to users across the world without sending every request to one central SQL database.
+
+---
+
+## 16. One subtle but important point
+
+**Interviewer:** *If we have an EU read replica, does that mean the application automatically knows to use it?*
+
+**Me:**
+
+> No. We need some form of routing.
+
+We could have regional API deployments configured with their preferred database replica.
+
+For example:
+
+```text
+German user
+    ↓
+EU API
+    ↓
+EU SQL replica
+```
+
+while:
+
+```text
+Indian user
+    ↓
+Asia API
+    ↓
+Asia SQL replica
+```
+
+The global traffic-routing layer can direct users to an appropriate region.
+
+But the system still needs to know whether a particular operation can safely use a replica.
+
+A read-only operation such as:
+
+> "Give me video 123"
+
+can usually use the local replica.
+
+A write operation such as:
+
+> "Change the video title"
+
+goes to the authoritative writer.
+
+And an operation requiring the very latest data may need special handling.
+
+---
+
+# 17. What if the EU region goes down?
+
+This is where **replication and availability** become useful.
+
+Suppose:
+
+```text
+             Primary
+                |
+        +-------+-------+
+        |               |
+      EU DB           Asia DB
+        X
+```
+
+If the EU region disappears, traffic can be routed to another healthy region.
+
+The user's request may have slightly higher latency, but the service remains available.
+
+For the video itself, the CDN may already have the content cached independently, so playback might continue even while an API region is unavailable.
+
+This gives us **regional fault tolerance**.
+
+---
+
+# 18. But there's a dangerous assumption
+
+We should **not** say:
+
+> "If the primary dies, just promote any replica."
+
+We first need to understand replication state.
+
+Suppose the primary has processed:
+
+```text
+Video 1
+Video 2
+Video 3
+Video 4
+```
+
+and the EU replica has only received:
+
+```text
+Video 1
+Video 2
+Video 3
+```
+
+If we immediately promote EU, we've potentially lost the latest write.
+
+So failover involves questions such as:
+
+- How far behind is the replica?
+- Was the latest transaction replicated?
+- Which node is allowed to become primary?
+- How do other nodes discover the new primary?
+- How do we prevent two primaries from accepting writes?
+
+This is where **distributed consensus/failover mechanisms** start becoming relevant.
+
+---
+
+And this is the key mental model I want you to take from this design so far:
+
+> **Global applications don't automatically mean "put a copy of the SQL database everywhere."**
+
+Instead, we choose separately for each workload:
+
+**Where is the authoritative data?**
+
+**Where can copies safely exist?**
+
+**Which copies can accept reads?**
+
+**Which copies can accept writes?**
+
+**How stale can a copy be?**
+
+**What happens when the authoritative region fails?**
+
+**Can the data be partitioned geographically or by key?**
+
+For YouTube, a very reasonable starting architecture is:
+
+**one authoritative SQL write path + regional read replicas + CDN/object storage for the massive video-read workload.**
+
+Then, only where the scale or latency requirements demand it, we introduce **sharding or multi-region/multi-writer architecture**.
