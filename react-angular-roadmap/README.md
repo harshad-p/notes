@@ -67,6 +67,7 @@ Before writing substantial JavaScript, we establish what we're actually working 
 - Execution
 - Global execution context
 - Function execution context
+- **Execution context vs call stack** — only the distinction, not the full call-stack lesson
 
 ### 1.4 The call stack
 - What the stack represents
