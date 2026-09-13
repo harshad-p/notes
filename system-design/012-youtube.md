@@ -1083,3 +1083,386 @@ And importantly, **the CDN still handles the enormous video-content traffic**, s
 The next interesting problem is now **YouTube's views and likes**.
 
 That's where we'll encounter a completely different scaling problem: **billions of writes**, hot videos, counters, eventual consistency, aggregation, and why we might *not* want to increment a SQL row synchronously for every view.
+
+## YouTube: Views, Likes, and Massive Write Traffic
+
+**Interviewer:** *YouTube gets billions of video views. How would you handle view counts and likes at this scale?*
+
+**Me:**
+
+> I wouldn't synchronously increment a row in our SQL database for every video view.
+
+(That would turn a very hot video into a hot database row and create enormous write contention.)
+
+Instead, I'd treat a view as an **event**.
+
+A simplified flow would be:
+
+```text
+User watches video
+       |
+       v
+API / playback service
+       |
+       v
+Event stream / queue
+       |
+       +----> View aggregation
+       |
+       +----> Analytics
+       |
+       +----> Recommendation system
+```
+
+The user's video playback should **not wait for the database counter to be updated**.
+
+---
+
+### 1. Why not simply do this?
+
+Suppose a video gets 100,000 views per second.
+
+Our naive implementation would do:
+
+```text
+UPDATE Videos
+SET ViewCount = ViewCount + 1
+WHERE Id = 123;
+```
+
+100,000 times per second against the same row.
+
+Even if SQL can technically process a large number of updates, we've created a **hot row**.
+
+And there's no reason the displayed view count needs to be accurate to the exact millisecond.
+
+So instead, we'd collect events and aggregate them.
+
+---
+
+### 2. Aggregating views
+
+For example, workers could process batches:
+
+```text
+100,000 view events
+        |
+        v
+Aggregation
+        |
+        v
++100,000 views
+        |
+        v
+Persist aggregate
+```
+
+The displayed count might therefore lag by a few seconds.
+
+For YouTube, that's generally acceptable.
+
+This gives us a much more scalable architecture.
+
+---
+
+### 3. But where do the raw events go?
+
+At YouTube scale, I'd expect a distributed event-streaming system capable of handling enormous throughput.
+
+Something like Kafka or an equivalent distributed log would be a reasonable choice.
+
+We could partition events by `VideoId`.
+
+That gives us an interesting property:
+
+```text
+Video A events → Partition 1
+Video B events → Partition 2
+Video C events → Partition 3
+```
+
+Events for the same video can therefore be processed in an ordered stream.
+
+But there's a problem.
+
+### What if one video becomes extremely popular?
+
+Suppose one video gets 10 million views per second.
+
+If every event for that video goes to one partition, we've created a **hot partition**.
+
+So even event partitioning needs careful thought.
+
+We might partition using a combination of video ID and another value, allowing a very hot video's events to be spread across multiple partitions.
+
+Then aggregation becomes a two-stage process:
+
+```text
+Raw events
+    |
+    v
+Parallel aggregation
+    |
+    v
+Partial counts
+    |
+    v
+Final aggregation
+```
+
+---
+
+### 4. Do we lose accuracy?
+
+We need to distinguish **exact event processing** from **eventual aggregation**.
+
+We want each legitimate view to contribute appropriately, but the displayed aggregate doesn't have to update synchronously.
+
+We'd also need to think about duplicate events.
+
+For example:
+
+```text
+Client sends view event
+       |
+       v
+Server processes it
+       |
+       X
+    response lost
+       |
+       v
+Client retries
+```
+
+Now we might receive the same logical event twice.
+
+So we'd want an event ID or another mechanism for deduplication where the business requirement requires it.
+
+(Exactly-once processing across a large distributed system is expensive and complicated. Often we instead design processing to be **at-least-once** and make the aggregation idempotent.)
+
+---
+
+## 5. What about likes?
+
+Likes are different.
+
+A user can only have one active like per video.
+
+So I care about the invariant:
+
+> One user should not have two active likes on the same video.
+
+That is a stronger consistency requirement than simply displaying a view count.
+
+I could maintain something like:
+
+```text
+VideoLike
+---------
+video_id
+user_id
+created_at
+```
+
+with a uniqueness constraint on:
+
+```text
+(video_id, user_id)
+```
+
+Then a user's like operation can be made idempotent.
+
+If the user clicks Like twice, we don't create two likes.
+
+---
+
+### 6. But likes can also become extremely hot
+
+Imagine a celebrity releases a video and receives millions of likes within minutes.
+
+We still don't necessarily want every like to synchronously update:
+
+```text
+Videos.LikeCount
+```
+
+Instead, we can separate:
+
+**User's actual like state**
+
+from
+
+**displayed aggregate like count.**
+
+The user's like relationship needs stronger consistency.
+
+The aggregate count can be updated asynchronously.
+
+So:
+
+```text
+UserLike
+   |
+   +----> authoritative state
+   |
+   +----> event
+            |
+            v
+       aggregation
+            |
+            v
+      LikeCount
+```
+
+This is a recurring distributed-systems pattern:
+
+> **Keep the correctness-critical state separate from the derived aggregate.**
+
+---
+
+## 7. Where does SQL fit now?
+
+We still absolutely can use SQL.
+
+For example, SQL could remain the authoritative store for user/video relationships:
+
+```text
+User
+Channel
+Video
+VideoLike
+Comment
+```
+
+while the enormous stream of view events goes through a distributed event-processing system.
+
+We might periodically write aggregated counters back into SQL or another serving store.
+
+So we're not saying:
+
+> "SQL can't handle YouTube."
+
+We're saying:
+
+> **Don't force one SQL row to synchronously handle every event generated by the entire world.**
+
+---
+
+## 8. What happens across regions?
+
+Now our global architecture becomes more interesting.
+
+A user in Europe generates a view.
+
+A user in Asia generates another view.
+
+We don't want both requests travelling across the world just to increment a SQL counter.
+
+Instead:
+
+```text
+Europe                         Asia
+   |                             |
+Regional API                  Regional API
+   |                             |
+   v                             v
+Regional event stream       Regional event stream
+   |                             |
+   +-------------+---------------+
+                 |
+                 v
+          Global aggregation
+                 |
+                 v
+           View counters
+```
+
+The events can be processed close to where they're generated.
+
+The final aggregate can be globally combined.
+
+This is much more scalable than globally synchronizing every individual view.
+
+---
+
+### 9. Now we have an important consistency decision
+
+**Interviewer:** *Does every user immediately see the exact same view count?*
+
+**Me:**
+
+> No, I wouldn't require that.
+
+I'd define the view count as **eventually consistent**.
+
+If one region has processed 10,000 more views than another, users might temporarily see slightly different counts.
+
+For a YouTube-style view counter, that's an acceptable trade-off for massive scalability and low latency.
+
+For something like a bank balance, I would make a very different decision.
+
+---
+
+## 10. This gives us an important classification
+
+We're now getting to the heart of distributed-system design.
+
+| Data | Consistency requirement |
+|---|---|
+| Video file | Strong durability, CDN replication |
+| Video title | Usually eventual for global reads |
+| View count | Eventual |
+| Like count | Eventual aggregate |
+| User's like relationship | Stronger consistency |
+| Channel ownership | Strong consistency |
+| Payment | Strong consistency |
+| Recommendations | Eventual |
+
+So **the entire YouTube system does not have one consistency model**.
+
+Different pieces of data have different requirements.
+
+And that's one of the most important things to recognize when designing globally distributed systems.
+
+---
+
+### Where we've reached
+
+Our architecture now has several distinct layers:
+
+```text
+                     GLOBAL USERS
+                          |
+                   Global Routing
+                          |
+              +-----------+-----------+
+              |                       |
+         Regional APIs            Regional APIs
+              |                       |
+        SQL / Cache              SQL / Cache
+              |                       |
+       +------+-------+       +-------+------+
+       |              |       |              |
+    Metadata        Events  Metadata       Events
+                       \       /
+                        \     /
+                     Event Stream
+                          |
+                    Aggregation
+                          |
+                    Derived data
+
+
+Video content
+      |
+      v
+Object Storage
+      |
+      v
+Global CDN
+```
+
+And now we've covered the major reason **not everything should be replicated through SQL synchronously**.
+
+Next, I'd take us into **global SQL consistency and failover**: what happens when the primary region dies, how replicas are promoted, what replication guarantees mean, and then the harder question of **whether a globally distributed SQL database such as CockroachDB/Spanner-style architecture changes the design**.
