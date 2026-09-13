@@ -773,3 +773,313 @@ For YouTube, a very reasonable starting architecture is:
 **one authoritative SQL write path + regional read replicas + CDN/object storage for the massive video-read workload.**
 
 Then, only where the scale or latency requirements demand it, we introduce **sharding or multi-region/multi-writer architecture**.
+
+## Continuing: Sharding and Global Data Ownership
+
+**Interviewer:** *Our single SQL primary is becoming a bottleneck. How would you scale the database?*
+
+**Me:**
+
+> I would consider sharding the database so that the workload is distributed across multiple database partitions.
+
+The first question is **what should determine the shard**.
+
+For YouTube, `UserId` or `ChannelId` would be strong candidates because many operations are naturally associated with a user or channel.
+
+For example:
+
+```text id="9d4y2m"
+                 Video Data
+                    |
+        +-----------+-----------+
+        |           |           |
+      Shard A     Shard B     Shard C
+      Users       Users       Users
+       1-...       ...         ...
+```
+
+But I wouldn't literally use ranges like `1–1M`, `1M–2M`, etc. without considering the distribution of traffic.
+
+A hash-based partitioning scheme can distribute users more evenly.
+
+---
+
+### 1. What exactly are we sharding?
+
+I'd avoid assuming that the entire application has to use one shard key.
+
+For example:
+
+- User/channel data could be sharded by `UserId` or `ChannelId`.
+- Video metadata could potentially be colocated with its channel.
+- Comments could be partitioned by `VideoId`.
+- View events could use a completely different high-throughput storage architecture.
+
+The goal is to choose a partitioning strategy based on **access patterns**.
+
+(I want related data that is frequently queried together to be colocated where practical.)
+
+---
+
+### 2. Each shard can still have replicas
+
+Sharding and replication solve different problems.
+
+We could have:
+
+```text id="b1xq5w"
+                    Global Dataset
+                         |
+             +-----------+-----------+
+             |           |           |
+           Shard A     Shard B     Shard C
+             |           |           |
+          Primary      Primary      Primary
+          /    \       /    \       /    \
+        EU     US     EU     US    EU     US
+       replica replica replica replica replica replica
+```
+
+So:
+
+**Sharding** distributes *different data* across databases.
+
+**Replication** creates *copies of the same data*.
+
+And we can use both simultaneously.
+
+---
+
+### 3. How does the API know which shard to query?
+
+We need a routing layer.
+
+For example, if we're sharding by `UserId`, the API can determine the shard from the user's ID.
+
+Conceptually:
+
+```text id="qz7t0u"
+UserId
+   |
+   v
+Shard routing
+   |
+   v
+Shard B
+```
+
+The application doesn't need to ask every database:
+
+> "Do you have this user?"
+
+It calculates or looks up the appropriate shard.
+
+For a hash-based scheme, something like:
+
+`hash(UserId) → shard`
+
+could determine the destination.
+
+In a real system, I'd generally have a **shard map/configuration service** rather than hardcoding this logic everywhere.
+
+---
+
+### 4. What happens when we add more shards?
+
+This is one of the major problems with sharding.
+
+Suppose we have:
+
+```text id="6c7m2k"
+Shard A
+Shard B
+Shard C
+```
+
+and later need:
+
+```text id="x8f2z1p"
+Shard A
+Shard B
+Shard C
+Shard D
+Shard E
+Shard F
+```
+
+If our hash function directly maps IDs to the number of shards, adding shards can cause a huge amount of data to move.
+
+That's why systems often use techniques such as **consistent hashing** or a logical-partition approach.
+
+For example, instead of saying:
+
+> "There are exactly 6 physical shards."
+
+we could have many logical partitions and map those partitions onto physical database nodes.
+
+That gives us much more flexibility when scaling.
+
+---
+
+### 5. What about a massive YouTube channel?
+
+Now we encounter another important problem.
+
+Suppose a celebrity has a channel with billions of views and enormous amounts of comments.
+
+If we shard by `ChannelId`, all that activity might end up concentrated on one shard.
+
+That's a **hot shard**.
+
+So the shard key isn't simply about distributing storage.
+
+It also needs to distribute **traffic**.
+
+For very hot data, we may need additional partitioning.
+
+For example, comments could be partitioned using something like:
+
+`ChannelId + VideoId`
+
+rather than putting everything belonging to a channel onto one partition.
+
+---
+
+### 6. What about queries across shards?
+
+Suppose an administrator asks:
+
+> "Give me the 100 most-viewed videos across all of YouTube."
+
+If videos are distributed across 1,000 shards, there isn't one database containing the answer.
+
+We could query every shard:
+
+```text id="wq4s8j"
+Shard A ──┐
+Shard B ──┤
+Shard C ──┤
+...       ├──> Merge results
+Shard Z ──┘
+```
+
+But doing that synchronously for every user request would obviously be expensive.
+
+So we'd generally maintain **precomputed aggregates, indexes, or specialized analytical systems** for global queries.
+
+This is an important consequence of sharding:
+
+> **Sharding makes individual partitions easier to scale, but cross-shard queries become harder.**
+
+---
+
+### 7. What about geographic ownership?
+
+Now let's connect this back to your original question.
+
+We could have a user whose data is primarily owned by a particular region.
+
+For example:
+
+```text id="q5m0k8"
+German user
+    |
+    v
+EU shard
+    |
+    +--> EU primary
+    |
+    +--> US replica
+    |
+    +--> Asia replica
+```
+
+And another user:
+
+```text id="k0r8sp"
+Indian user
+    |
+    v
+Asia shard
+    |
+    +--> Asia primary
+    |
+    +--> EU replica
+    |
+    +--> US replica
+```
+
+Now we're combining:
+
+**partitioning by data ownership**
+
+with
+
+**replication for geographic reads and availability.**
+
+This can reduce write latency because a user's authoritative data can be owned by a geographically appropriate region.
+
+But it introduces another question:
+
+> What happens when users from different regions interact with the same data?
+
+That's where things get considerably harder.
+
+---
+
+### 8. Do we actually need multi-region writes?
+
+For YouTube, I'd still try to avoid them wherever possible.
+
+Suppose a German creator owns a channel whose authoritative shard is in Europe.
+
+An Indian user commenting on that creator's video doesn't necessarily require us to make the same SQL row writable from both Europe and India.
+
+We could route the comment write to the appropriate owning shard.
+
+The Indian user may experience slightly higher write latency, but the system remains much easier to reason about.
+
+For workloads where **very low write latency in every region is mandatory**, we'd have to consider more sophisticated multi-region write architectures.
+
+That's the point where we start discussing things like:
+
+- multi-leader replication
+- consensus
+- quorum
+- conflict resolution
+- globally distributed SQL databases
+
+But I wouldn't jump there for YouTube unless the requirements justify it.
+
+---
+
+### The important mental model
+
+At this point, our SQL architecture isn't simply:
+
+> **"One database with copies."**
+
+It's closer to:
+
+```text
+                   Global SQL Data
+                         |
+          +--------------+--------------+
+          |              |              |
+       Shard A         Shard B        Shard C
+          |              |              |
+       Primary        Primary        Primary
+       /    \         /    \         /    \
+      EU    US       EU    Asia     US    Asia
+    replica replica replica replica replica replica
+```
+
+Each **shard owns a different portion of the data**, while its replicas provide geographic read capacity and failover.
+
+And importantly, **the CDN still handles the enormous video-content traffic**, so our SQL system isn't being asked to serve the actual video streams.
+
+---
+
+The next interesting problem is now **YouTube's views and likes**.
+
+That's where we'll encounter a completely different scaling problem: **billions of writes**, hot videos, counters, eventual consistency, aggregation, and why we might *not* want to increment a SQL row synchronously for every view.
