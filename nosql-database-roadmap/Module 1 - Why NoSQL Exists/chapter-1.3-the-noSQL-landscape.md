@@ -218,9 +218,8 @@ So wide-column modeling requires strong understanding of workload and access pat
 
 ### Representative databases
 
- → **Wide-column**
-
- → **Wide-column**
+- **Cassandra → Wide-column**
+- **ScyllaDB → Wide-column**
 
 We'll study both because they are particularly valuable for understanding distributed database architecture.
 
