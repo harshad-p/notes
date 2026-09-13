@@ -3711,3 +3711,565 @@ I'd say:
 > Yes, because the high-volume traffic is primarily absorbed by the CDN rather than hitting our API servers, SQL database, or object-storage origin directly. CDN caching, request coalescing, and multiple edge locations prevent a viral video's traffic from translating one-for-one into origin traffic. The remaining watch events are handled asynchronously through the event pipeline rather than synchronously updating the video row.
 
 The next issue I'd tackle is **YouTube search**. Search has a very different workload from ordinary SQL metadata lookup: we need full-text search across an enormous number of videos, relevance ranking, indexing, freshness, and eventually personalized results. That's still squarely part of our YouTube design.
+
+## YouTube — Search
+
+### Interviewer:
+> Now design search. A user types "football highlights" and expects relevant YouTube videos. How would you handle that at YouTube scale?
+
+### Candidate:
+
+I wouldn't query our SQL database directly with something like:
+
+```sql
+SELECT *
+FROM Videos
+WHERE Title LIKE '%football highlights%';
+```
+
+At YouTube scale, that wouldn't be an appropriate search architecture.
+
+We need a **dedicated search index**.
+
+---
+
+## 1. Search architecture
+
+I'd introduce a search service:
+
+```text id="b9d0h1"
+User
+ |
+ | GET /search?q=football+highlights
+ v
+Search API
+ |
+ v
+Search Service
+ |
+ v
+Search Index
+```
+
+The SQL database remains the authoritative source for video metadata.
+
+The search index is a **derived representation optimized for searching**.
+
+For example:
+
+```text id="6w3v7c"
+SQL
+Video 123
+Title       = "Best Football Highlights"
+Description = "..."
+ChannelId   = 456
+Status      = READY
+```
+
+The search index might contain:
+
+```text id="1c2p8d"
+Document 123
+-----------------------------
+title: "Best Football Highlights"
+description: "..."
+channel_id: 456
+...
+```
+
+The search index is optimized for things such as:
+
+- full-text matching
+- relevance
+- ranking
+- filtering
+- autocomplete
+
+rather than transactional updates.
+
+---
+
+## 2. How does data get into the search index?
+
+We shouldn't make video creation synchronously depend on search indexing.
+
+Instead:
+
+```text id="e5f0l7"
+Video created/updated
+        |
+        v
+     Event
+        |
+        v
+   Event Stream
+        |
+        v
+ Search Indexer
+        |
+        v
+ Search Index
+```
+
+So when a creator uploads a video:
+
+```text id="g9s2kj"
+SQL
+ |
+ +-- Video metadata
+ |
+ +-- event
+       |
+       v
+   Search Index
+```
+
+This means the search index can be **eventually consistent**.
+
+For example, a video might become `READY` at 10:00:00 but appear in search at 10:00:02.
+
+That's generally acceptable.
+
+---
+
+## 3. What happens when the title changes?
+
+Suppose the creator changes:
+
+```text id="e1w4wz"
+"Berlin Travel"
+```
+
+to:
+
+```text id="k2v7mc"
+"Berlin Travel Guide 2026"
+```
+
+SQL is updated first.
+
+Then:
+
+```text id="4c0y4m"
+VideoUpdated event
+        |
+        v
+Search Indexer
+        |
+        v
+Search document updated
+```
+
+Again, there's potentially a tiny delay.
+
+We don't need a distributed transaction between SQL and the search engine.
+
+---
+
+## 4. Search result shouldn't contain everything
+
+Suppose the search index returns:
+
+```text id="i9x4q0"
+Video IDs:
+123
+456
+789
+```
+
+We then need metadata for those results.
+
+We have two broad options.
+
+### Option A — Store enough metadata in the search index
+
+The index contains:
+
+```text id="3u0c2m"
+VideoId
+Title
+Thumbnail
+ChannelName
+Duration
+PublishedAt
+...
+```
+
+Then the search response can be generated directly from the index.
+
+This is usually preferable for a search-heavy workload.
+
+### Option B — Fetch metadata from SQL
+
+```text id="qz3e5y"
+Search
+ |
+ v
+[123,456,789]
+ |
+ v
+SQL
+ |
+ v
+metadata
+```
+
+But this introduces additional database traffic and latency.
+
+So I'd keep the fields required to render search results in the search index itself.
+
+(The index is still not the authoritative source; it's a searchable projection of the underlying data.)
+
+---
+
+## 5. Ranking
+
+Finding matching videos isn't enough.
+
+Suppose there are 10 million videos matching:
+
+> football
+
+We need to decide which 20 appear first.
+
+Ranking could consider signals such as:
+
+- textual relevance
+- watch time
+- engagement
+- freshness
+- video quality
+- language
+- location
+- user preferences
+- personalization
+
+Conceptually:
+
+```text id="y8v3m1"
+Query
+  |
+  v
+Candidate retrieval
+  |
+  v
+Potentially thousands of videos
+  |
+  v
+Ranking
+  |
+  v
+Top 20
+```
+
+At first, I'd keep ranking relatively simple.
+
+For example:
+
+```text id="0kz3vr"
+Text relevance
++
+Popularity
++
+Freshness
+```
+
+Then we can introduce more sophisticated recommendation/personalization models later.
+
+(Again: start simple and scale the part that actually becomes a bottleneck.)
+
+---
+
+## 6. Search index itself needs to scale
+
+One search server obviously isn't enough.
+
+We can partition the index into **shards**.
+
+```text id="c7j5q8"
+                    Search Index
+                         |
+          +--------------+--------------+
+          |              |              |
+       Shard 1        Shard 2        Shard 3
+```
+
+A query may need to search multiple shards:
+
+```text id="z2v8n4"
+"football highlights"
+       |
+       v
+ +-----+-----+-----+
+ |     |     |     |
+ v     v     v     v
+ S1    S2    S3   ...
+ |     |     |
+ +-----+-----+
+       |
+       v
+ candidate results
+       |
+       v
+     ranking
+```
+
+This is one of the places where a distributed search system naturally performs a **scatter/gather** operation.
+
+But we'd keep the shards distributed and replicated so that one node failing doesn't make search unavailable.
+
+---
+
+## 7. Replication
+
+We can have replicas of search shards:
+
+```text id="m7x2za"
+Shard 1
+  |
+  +-- Replica A
+  +-- Replica B
+
+Shard 2
+  |
+  +-- Replica A
+  +-- Replica B
+```
+
+If one search node fails, another replica can serve that shard's portion.
+
+Search doesn't need to be perfectly consistent at every instant.
+
+If a newly uploaded video takes a few seconds to appear, that's acceptable.
+
+---
+
+## 8. What if the search index completely disappears?
+
+This is another useful distinction.
+
+The search index is **derived data**.
+
+Our authoritative video metadata remains in SQL.
+
+So theoretically:
+
+```text id="w3s9x1"
+SQL
+ |
+ | authoritative
+ v
+Video metadata
+```
+
+can rebuild:
+
+```text id="x1v7q0"
+SQL
+ |
+ v
+Re-indexing pipeline
+ |
+ v
+Search Index
+```
+
+Of course, rebuilding billions of videos would take a long time, so we'd maintain backups/snapshots and replicated indexes in practice.
+
+But the architectural principle is important:
+
+> **Don't make a derived search index the only copy of critical metadata.**
+
+---
+
+## 9. Global search
+
+Now we're back to our global YouTube requirement.
+
+A user in Germany shouldn't necessarily have to query a search cluster physically located in the US.
+
+We can deploy search infrastructure regionally:
+
+```text id="j2p5w8"
+                  Global Users
+                       |
+              Global Traffic Routing
+                       |
+          +------------+------------+
+          |            |            |
+         EU           US          Asia
+       Search       Search        Search
+```
+
+The indexes can be replicated across regions.
+
+So:
+
+```text id="w4k8p2"
+Germany
+   |
+   v
+EU Search
+```
+
+while:
+
+```text id="s7m1q5"
+Japan
+   |
+   v
+Asia Search
+```
+
+gets low-latency access to search infrastructure.
+
+---
+
+## 10. But how do all regions get new videos?
+
+Suppose a creator in Germany publishes:
+
+```text id="x3n8a1"
+Video 123
+```
+
+The event pipeline can distribute the update:
+
+```text id="r7k4p9"
+SQL / authoritative metadata
+          |
+          v
+      VideoUpdated
+          |
+          v
+     Event Stream
+       /   |   \
+      v    v    v
+    EU    US   Asia
+    Index Index Index
+```
+
+Now all regional search indexes eventually contain the video.
+
+We accept some propagation delay.
+
+---
+
+## 11. Search autocomplete
+
+There's actually another workload hidden inside search.
+
+When the user types:
+
+```text
+foot
+```
+
+YouTube might suggest:
+
+```text
+football
+football highlights
+football skills
+football live
+```
+
+This needs to be extremely fast.
+
+We don't want to execute an expensive full search for every keystroke.
+
+So I'd treat autocomplete as a separate workload:
+
+```text id="c2y6r0"
+"f"
+ ↓
+"fo"
+ ↓
+"foo"
+ ↓
+"foot"
+```
+
+with a specialized/autocomplete index or cached popular queries.
+
+Because:
+
+```text
+GET /search/suggestions?q=foot
+```
+
+has very different requirements from:
+
+```text
+GET /search?q=football+highlights
+```
+
+---
+
+## Search architecture now
+
+Our YouTube system has another major subsystem:
+
+```text id="a9p3l6"
+                         YouTube
+                            |
+          +-----------------+------------------+
+          |                 |                  |
+          v                 v                  v
+       SQL DB          Event Stream       Search System
+          |                 |                  |
+          |                 |             +----+----+
+          |                 |             |         |
+          |                 |          EU Index   US Index
+          |                 |             |
+          |                 |          Asia Index
+          |                 |
+          +-----------------+
+                   |
+             derived data
+```
+
+And the search flow:
+
+```text id="r4c7v2"
+User
+ |
+ v
+Regional Search API
+ |
+ v
+Search Index
+ |
+ v
+Candidate videos
+ |
+ v
+Ranking
+ |
+ v
+Top results
+```
+
+while the authoritative data remains:
+
+```text id="h5n8q1"
+Video Metadata
+      |
+      v
+     SQL
+```
+
+---
+
+### Interviewer:
+> Why not just use SQL with indexes for search?
+
+I'd answer:
+
+> SQL indexes are excellent for structured lookups and filtering, but YouTube search needs large-scale full-text retrieval, relevance scoring, ranking, autocomplete, and distributed search across an enormous corpus. A dedicated search index is optimized for that workload, while SQL remains the source of truth for transactional metadata.
+
+---
+
+At this point we've covered the major **content path** and **search path**.
+
+The next major YouTube workload is **the homepage/feed and recommendations**. That's where our view, like, subscription, and watch-history events become useful: turning billions of user interactions into personalized video candidates without making the homepage request perform a massive computation.
