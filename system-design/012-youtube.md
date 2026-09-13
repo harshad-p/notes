@@ -1466,3 +1466,624 @@ Global CDN
 And now we've covered the major reason **not everything should be replicated through SQL synchronously**.
 
 Next, I'd take us into **global SQL consistency and failover**: what happens when the primary region dies, how replicas are promoted, what replication guarantees mean, and then the harder question of **whether a globally distributed SQL database such as CockroachDB/Spanner-style architecture changes the design**.
+
+---
+
+## YouTube — Global Database Failure & Consistency
+
+### Interviewer:
+> You have a primary SQL database in the US and read replicas in Europe and Asia. What happens if the US region goes down?
+
+### Candidate:
+
+I would first clarify what kind of failure we're dealing with.
+
+If the **US application servers** fail but the database remains healthy, that's relatively straightforward: traffic can be routed to another API region.
+
+But if the **US database primary itself fails**, we need database failover.
+
+Our architecture currently looks roughly like:
+
+```text
+                    Global Users
+                         |
+                  Global Routing
+                         |
+          +--------------+--------------+
+          |              |              |
+        EU API         US API        Asia API
+          |              |              |
+          v              v              v
+       EU SQL          US SQL         Asia SQL
+      Replica          Primary        Replica
+```
+
+Normally:
+
+```text
+                    US SQL
+                    Primary
+                   /       \
+                  /         \
+                 v           v
+             EU Replica   Asia Replica
+```
+
+If US goes down, we need to promote one of the replicas.
+
+For example:
+
+```text
+                    EU SQL
+                    Primary
+                   /       \
+                  /         \
+                 v           v
+            US Replica   Asia Replica
+```
+
+Then global routing sends writes to the new EU primary.
+
+---
+
+## But we can't simply say "pick the closest replica"
+
+This is an important part of the design.
+
+Suppose the US primary had accepted:
+
+```text
+Video 123
+title = "My New Video"
+```
+
+but replication to Europe was slightly behind.
+
+The EU replica might still contain:
+
+```text
+Video 123
+title = "Old Title"
+```
+
+If we immediately promote Europe, the acknowledged update might disappear.
+
+So failover depends partly on **how much replication lag we tolerate**.
+
+For YouTube, this gives us a trade-off.
+
+### Asynchronous replication
+
+```text
+US Primary
+    |
+    | replicate later
+    v
+EU Replica
+```
+
+The primary doesn't wait for Europe before acknowledging the write.
+
+That's good for write latency.
+
+But if US suddenly disappears:
+
+```text
+US: Video title = "New Title"   ✓ acknowledged
+
+EU: Video title = "Old Title"   ← replication hadn't arrived
+```
+
+The new title could potentially be lost during failover.
+
+For many YouTube operations, that may be an acceptable trade-off.
+
+A user changing a video's description isn't the same as a bank transaction.
+
+---
+
+## Stronger replication
+
+We could instead require some writes to be replicated to another region before acknowledging them.
+
+Conceptually:
+
+```text
+          Write
+            |
+            v
+        US Primary
+         /       \
+        v         v
+      EU DB     Asia DB
+        |         |
+        +----ACK--+
+             |
+             v
+          Client
+```
+
+Now the acknowledged write is much safer if US disappears.
+
+But there's a cost:
+
+**The write now depends on cross-region communication.**
+
+That increases latency.
+
+So for YouTube, I wouldn't make every piece of data globally synchronous.
+
+I'd classify the data according to how important the consistency is.
+
+| Data | Consistency |
+|---|---|
+| Video file | Strong durability |
+| Video title/description | Usually eventual |
+| View count | Eventual |
+| Like count | Eventual |
+| User's like relationship | Stronger |
+| Channel ownership | Strong |
+| Comments | Moderate/strong depending on operation |
+| Recommendations | Eventual |
+
+That's a very important design principle:
+
+> **Don't choose one consistency model for the entire system. Choose it per type of data and operation.**
+
+---
+
+# What actually happens during failover?
+
+Let's make the YouTube scenario concrete.
+
+Initially:
+
+```text
+US
+└── SQL Primary
+      |
+      +---- EU Replica
+      |
+      +---- Asia Replica
+```
+
+US suddenly becomes unavailable.
+
+### 1. Detect failure
+
+Our database infrastructure detects that the primary isn't healthy.
+
+We shouldn't promote a replica just because one API server couldn't connect.
+
+We need reasonably strong evidence that the primary is actually unavailable.
+
+---
+
+### 2. Select a replica
+
+Suppose:
+
+```text
+EU Replica
+Replication lag: 20 ms
+
+Asia Replica
+Replication lag: 2 seconds
+```
+
+EU is the better candidate.
+
+But we also need to know whether EU has reached a safe point in the transaction log.
+
+---
+
+### 3. Promote EU
+
+EU becomes the new authoritative writer.
+
+```text
+EU SQL
+Primary
+```
+
+The other regions now replicate from EU.
+
+```text
+                  EU Primary
+                 /          \
+                v            v
+          US Replica      Asia Replica
+```
+
+---
+
+### 4. Redirect writes
+
+Our YouTube API services need to discover the new primary.
+
+Previously:
+
+```text
+Write → US SQL
+```
+
+Now:
+
+```text
+Write → EU SQL
+```
+
+We shouldn't hardcode:
+
+```text
+db-server-us
+```
+
+into every API server.
+
+Instead, the database layer/service discovery tells the application which endpoint is currently authoritative.
+
+---
+
+### 5. Prevent split-brain
+
+This is extremely important.
+
+Imagine US comes back alive.
+
+If US thinks:
+
+> "I'm still the primary."
+
+while EU also thinks:
+
+> "I'm the primary."
+
+we could have:
+
+```text
+US Primary  <----->  EU Primary
+```
+
+and both accept writes.
+
+Now imagine:
+
+```text
+US:
+Video title = A
+
+EU:
+Video title = B
+```
+
+We've created conflicting histories.
+
+So the old primary must be **fenced off** from accepting writes before the new primary is allowed to take over.
+
+(At this scale, this usually involves some form of lease/consensus/fencing mechanism in the database or orchestration layer. The important interview point is that failover must guarantee **one authoritative writer**, not simply "promote a replica.")
+
+---
+
+# What about users watching videos during the failure?
+
+This is where YouTube's architecture becomes interesting.
+
+Remember that we're **not streaming video through the SQL database or even primarily through our API servers**.
+
+We have:
+
+```text
+User
+  |
+  v
+CDN
+  |
+  v
+Video Object Storage
+```
+
+So suppose the US database goes down.
+
+A user might still be able to watch a popular video because the video segments are already cached at a nearby CDN.
+
+```text
+User
+ |
+ v
+CDN
+ |
+ +-- video already cached
+ |
+ v
+Playback continues
+```
+
+The user might temporarily have trouble with:
+
+- uploading a video
+- changing metadata
+- liking a video
+- posting a comment
+- loading personalized recommendations
+
+But **already-cached video content can continue to be served**.
+
+This is a major benefit of separating:
+
+**control plane**
+
+from
+
+**content delivery**.
+
+For YouTube:
+
+```text
+Control / metadata
+
+Client
+  |
+  v
+API
+  |
+  v
+SQL
+```
+
+versus:
+
+```text
+Video delivery
+
+Client
+  |
+  v
+CDN
+  |
+  v
+Object Storage
+```
+
+A failure in the control plane doesn't necessarily stop the entire video delivery system.
+
+---
+
+# What about read-after-write?
+
+Here's another YouTube-specific problem.
+
+Suppose I'm a creator in Germany.
+
+I upload:
+
+> "My Trip to Berlin"
+
+The write goes to the current primary.
+
+Immediately afterward I request:
+
+```http
+GET /videos/123
+```
+
+But my request might hit the European replica.
+
+If replication hasn't caught up yet, I could see:
+
+```text
+404 Not Found
+```
+
+or old metadata.
+
+That's obviously a bad experience immediately after an operation.
+
+So for operations where the user expects to immediately see their own change, we can use a stronger read strategy.
+
+For example:
+
+```text
+POST /videos
+       |
+       v
+   Primary
+       |
+       v
+  version = 84521
+```
+
+The client/request context can carry that version.
+
+Then:
+
+```text
+GET /videos/123
+
+EU replica
+   |
+   +-- has version 84521? → yes → serve
+   |
+   +-- not caught up? → primary / another replica
+```
+
+We don't need every read to go to the primary.
+
+We only need to ensure that **reads requiring fresh state don't accidentally use an older replica**.
+
+That's much more scalable.
+
+---
+
+# RPO and RTO
+
+At this point, two useful reliability concepts naturally appear.
+
+### RPO — Recovery Point Objective
+
+How much acknowledged data can we potentially lose?
+
+For example:
+
+> RPO = 1 second
+
+means that in the worst case, we may lose around one second of recently acknowledged data.
+
+For YouTube:
+
+Losing a recently updated view count isn't particularly concerning.
+
+Losing a creator's entire uploaded video is obviously unacceptable.
+
+So different data paths can have very different durability requirements.
+
+---
+
+### RTO — Recovery Time Objective
+
+How long can the system take to recover?
+
+For example:
+
+> RTO = 30 seconds
+
+means we want the service back within roughly 30 seconds after a major failure.
+
+Again, YouTube doesn't necessarily need every subsystem to have exactly the same RTO.
+
+Video playback may have extremely aggressive availability requirements, while some administrative metadata operations can tolerate a little more degradation.
+
+---
+
+# Now let's update our YouTube architecture
+
+We're getting somewhere much more realistic:
+
+```text
+                         GLOBAL USERS
+                              |
+                     Global Traffic Routing
+                              |
+              +---------------+---------------+
+              |               |               |
+           EU API          US API          Asia API
+              |               |               |
+              +---------------+---------------+
+                              |
+                    YouTube Control Plane
+                              |
+                    +---------+---------+
+                    |                   |
+                 SQL DB             Event System
+                    |                   |
+             Metadata/state        Views/Likes/etc.
+                    |
+        +-----------+-----------+
+        |           |           |
+       EU          US          Asia
+     replica      primary     replica
+
+
+             VIDEO CONTENT PATH
+             
+User
+ |
+ v
+CDN
+ |
+ +---- cached video segments
+ |
+ v
+Object Storage
+ |
+ +---- original
+ +---- 360p
+ +---- 720p
+ +---- 1080p
+ +---- 4K
+```
+
+And during a US database failure:
+
+```text
+                         Global Users
+                              |
+                     Global Traffic Routing
+                              |
+                    +---------+---------+
+                    |                   |
+                 EU API             Asia API
+                    |                   |
+                    +---------+---------+
+                              |
+                         EU SQL
+                         Primary
+                        /       \
+                       v         v
+                 US Replica   Asia Replica
+
+
+Video playback can still go:
+
+User → CDN → cached/object-stored video
+```
+
+That's still **100% YouTube**. We're not leaving the problem.
+
+---
+
+# One more YouTube-specific question
+
+Now imagine the interviewer pushes us:
+
+> "You're saying there is one primary SQL database. YouTube has users all over the world. Won't all those writes eventually overwhelm that primary?"
+
+Yes.
+
+And this brings us to the next scaling problem **within YouTube**:
+
+```text
+             Millions of writes
+                    |
+                    v
+              One Primary
+                    |
+              bottleneck
+```
+
+We already introduced **sharding** earlier as one possible answer.
+
+But now we need to integrate it properly into our YouTube architecture rather than discussing sharding abstractly.
+
+For example:
+
+```text
+                    YouTube SQL
+                         |
+              +----------+----------+
+              |          |          |
+           Shard 1    Shard 2    Shard 3
+              |          |          |
+           users A-F   G-M       N-Z
+```
+
+And then each shard can itself have replicas:
+
+```text
+                 Shard 1
+                    |
+              +-----+-----+
+              |           |
+           Primary      Replica
+             US            EU
+```
+
+So **sharding + replication + geographic distribution** can all coexist.
+
+The important question for YouTube becomes:
+
+> **What exactly should we shard by?**
+
+That's the next thing I'd tackle, because the answer isn't simply "shard by UserId." Different YouTube workloads—videos, comments, channels, views, likes, search—have different access patterns.
+
+And that takes us deeper into the **YouTube design itself**, not into a generic database lesson.
