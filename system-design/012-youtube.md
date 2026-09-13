@@ -3171,3 +3171,543 @@ because the expensive processing work is isolated behind the queue.
 So our YouTube design now covers **upload → object storage → asynchronous processing → transcoding → CDN playback**, including failures and scaling.
 
 The next pressure point inside the same design is **playback itself**: how the player gets the right video segments, how CDN caching works for billions of views, what happens when a video suddenly goes viral, and how we prevent the origin/object storage from being overwhelmed.
+
+## YouTube — Video Playback at Global Scale
+
+### Interviewer:
+> Now let's focus on playback. A user clicks a video. Walk me through what happens.
+
+### Candidate:
+
+I'd separate **playback authorization/metadata** from **video delivery**.
+
+The API doesn't need to send the video itself.
+
+A simplified flow is:
+
+```text
+User
+ |
+ | GET /videos/123
+ v
+YouTube API
+ |
+ +---- SQL → metadata
+ |
+ v
+Playback information
+ |
+ v
+CDN
+ |
+ v
+Video segments
+```
+
+The API might return information telling the player where and how to retrieve the video streams.
+
+---
+
+## 1. The player needs multiple representations
+
+For our video:
+
+```text
+Video 123
+   |
+   +-- 360p
+   +-- 720p
+   +-- 1080p
+   +-- 1440p
+   +-- 4K
+```
+
+Each representation is divided into segments:
+
+```text
+1080p
+ ├── segment 001
+ ├── segment 002
+ ├── segment 003
+ ├── ...
+```
+
+The player doesn't necessarily download the entire video.
+
+It requests segments as needed.
+
+---
+
+# 2. Adaptive bitrate
+
+Suppose I'm watching on a good connection.
+
+The player might initially select:
+
+```text
+1080p
+```
+
+If bandwidth drops:
+
+```text
+1080p
+  ↓
+720p
+```
+
+If it becomes even worse:
+
+```text
+720p
+  ↓
+480p
+```
+
+The goal is to avoid:
+
+> **buffering**
+
+rather than blindly maximizing resolution.
+
+So the player continuously considers things such as:
+
+- available bandwidth
+- current buffer
+- device capabilities
+- video resolution
+- segment download time
+
+and chooses an appropriate representation.
+
+---
+
+# 3. Why the CDN is critical
+
+Imagine a video becomes extremely popular.
+
+```text
+        Video 123
+           |
+     10 million viewers
+           |
+     +-----+-----+
+     |     |     |
+    EU    US    Asia
+```
+
+If every viewer requested the video directly from object storage:
+
+```text
+10 million viewers
+       |
+       v
+Object Storage
+```
+
+the origin would receive an enormous amount of traffic.
+
+Instead:
+
+```text
+                         Object Storage
+                              |
+                              v
+                             CDN
+                       /       |       \
+                      /        |        \
+                    EU        US       Asia
+                  viewers   viewers   viewers
+```
+
+The CDN caches the video segments.
+
+Once a segment is cached at an edge location, subsequent viewers can receive it without going all the way back to the origin.
+
+---
+
+# 4. Viral video problem
+
+Now let's make this more extreme.
+
+A celebrity uploads a video.
+
+Within minutes:
+
+> 50 million people want to watch it.
+
+This creates a **cache-miss storm** if the CDN doesn't already have the content.
+
+For example:
+
+```text
+50 million requests
+        |
+        v
+CDN
+        |
+        | cache miss
+        v
+Object Storage
+```
+
+We don't want 50 million origin requests.
+
+Instead, the CDN should use mechanisms such as **request collapsing/coalescing**.
+
+Conceptually:
+
+```text
+Viewer 1 ─┐
+Viewer 2 ─┤
+Viewer 3 ─┤
+Viewer 4 ─┤
+           ├── CDN ── one origin request
+Viewer 5 ─┤
+Viewer 6 ─┤
+Viewer 7 ─┘
+```
+
+The first request fetches the segment from the origin.
+
+Other requests can wait for that same fetch.
+
+Then:
+
+```text
+                    Origin
+                       |
+                       v
+                  CDN segment
+                 / / / | \ \ \
+                v v v  v  v v v
+              viewers...
+```
+
+So a viral video doesn't necessarily translate into a proportional increase in origin traffic.
+
+---
+
+# 5. Cache hierarchy
+
+At enormous scale, we can have multiple layers.
+
+Conceptually:
+
+```text
+Viewer
+   |
+   v
+Edge CDN
+   |
+   | miss
+   v
+Regional CDN/cache
+   |
+   | miss
+   v
+Object Storage
+```
+
+For a popular video:
+
+```text
+Viewer
+   |
+   v
+Edge Cache
+   |
+   +-- HIT → return segment
+```
+
+For a less popular video:
+
+```text
+Viewer
+   |
+   v
+Edge Cache
+   |
+   +-- MISS
+        |
+        v
+   Regional Cache
+        |
+        +-- HIT → return
+```
+
+Only when necessary do we reach object storage.
+
+(This hierarchy is an architectural option; the exact CDN topology would depend on the infrastructure chosen.)
+
+---
+
+# 6. What happens when a video is not popular?
+
+We shouldn't permanently cache every video everywhere.
+
+That would be extremely expensive.
+
+Suppose YouTube has billions of videos, but only a small fraction are receiving heavy traffic.
+
+So caching naturally follows popularity.
+
+```text
+Popular video
+→ many CDN cache hits
+
+Rare video
+→ fewer cached copies
+→ eventually fetched from origin
+```
+
+This is one of the reasons CDNs work so well for YouTube-like workloads.
+
+---
+
+# 7. Cache expiration and video immutability
+
+There's a very useful property here:
+
+**The actual video content generally doesn't change after publication.**
+
+If:
+
+```text
+video123/1080p/segment001
+```
+
+represents a particular immutable segment, we don't need to constantly invalidate it.
+
+We can give it a long cache lifetime.
+
+If the creator changes the title:
+
+```text
+SQL metadata changes
+```
+
+but:
+
+```text
+video segment
+```
+
+doesn't change.
+
+So metadata and video content have very different caching characteristics.
+
+That's another reason we separated them.
+
+---
+
+# 8. What if the creator deletes the video?
+
+Now we have an interesting consistency problem.
+
+Suppose:
+
+```text
+SQL
+Video 123 = DELETED
+```
+
+but the CDN still has:
+
+```text
+video123/1080p/segment001
+```
+
+cached.
+
+We don't necessarily want users to continue accessing a deleted video.
+
+So playback authorization/metadata can check the video's current state before allowing access.
+
+The CDN can also have appropriate invalidation/expiry mechanisms.
+
+The key distinction is:
+
+> **Caching immutable content is easy; deciding whether the user is still allowed to access that content is a control-plane concern.**
+
+---
+
+# 9. What if the API is temporarily unavailable?
+
+This is another benefit of separating metadata/control from content delivery.
+
+Suppose:
+
+```text
+YouTube API
+     X
+```
+
+but:
+
+```text
+CDN
+ |
+ +-- cached video segments
+```
+
+are healthy.
+
+Already-established playback sessions may continue consuming cached segments.
+
+But a brand-new playback request may need the API to obtain authorization or playback information.
+
+So we don't claim:
+
+> "The CDN makes YouTube completely independent of the API."
+
+Rather:
+
+> **The CDN reduces the dependency of high-volume video delivery on the API and database.**
+
+That's a much more accurate architecture statement.
+
+---
+
+# 10. Regional failure
+
+Suppose the European CDN infrastructure has a problem.
+
+We can route the viewer to another healthy CDN location.
+
+Conceptually:
+
+```text
+Germany
+   |
+   v
+EU CDN
+   X
+   |
+   v
+Alternative CDN location
+   |
+   v
+Video
+```
+
+The exact routing mechanism could use CDN-level traffic management, DNS/anycast/global routing, etc.
+
+The important design principle is:
+
+> **Don't make one physical region a single point of failure for global playback.**
+
+---
+
+# 11. Playback versus view counting
+
+There's another important separation.
+
+A user watches:
+
+```text
+Video 123
+```
+
+The video segments come through:
+
+```text
+CDN
+```
+
+But that doesn't mean every segment request should synchronously update:
+
+```text
+ViewCount
+```
+
+Instead, the playback system can generate an appropriate **watch/view event** after satisfying the platform's rules for what constitutes a view.
+
+Then:
+
+```text
+Playback
+   |
+   v
+View Event
+   |
+   v
+Event Stream
+   |
+   v
+Aggregation
+   |
+   +---- View count
+   +---- Analytics
+   +---- Recommendations
+   +---- Creator statistics
+```
+
+This keeps the extremely high-volume playback path independent from the transactional database.
+
+---
+
+# Our YouTube playback architecture
+
+We're now at:
+
+```text
+                         GLOBAL VIEWERS
+                              |
+                              v
+                       Global Routing
+                              |
+                         YouTube API
+                              |
+                    +---------+---------+
+                    |                   |
+                    v                   v
+                  SQL            Playback information
+                                        |
+                                        v
+                                       CDN
+                                        |
+                         +--------------+--------------+
+                         |              |              |
+                      EU Edge        US Edge        Asia Edge
+                         |              |              |
+                         +--------------+--------------+
+                                        |
+                                  Cache miss
+                                        |
+                                        v
+                                  Object Storage
+                                        |
+                                        v
+                                  Video segments
+```
+
+And independently:
+
+```text
+Playback
+   |
+   +---- CDN → video segments
+   |
+   +---- View/watch events
+               |
+               v
+          Event Stream
+               |
+       +-------+-------+
+       |       |       |
+     Views  Analytics  Recommendations
+```
+
+This is now a fairly realistic **global YouTube playback architecture**.
+
+---
+
+### Interviewer:
+> A video suddenly goes viral and receives millions of requests per second. Are you comfortable with this architecture?
+
+I'd say:
+
+> Yes, because the high-volume traffic is primarily absorbed by the CDN rather than hitting our API servers, SQL database, or object-storage origin directly. CDN caching, request coalescing, and multiple edge locations prevent a viral video's traffic from translating one-for-one into origin traffic. The remaining watch events are handled asynchronously through the event pipeline rather than synchronously updating the video row.
+
+The next issue I'd tackle is **YouTube search**. Search has a very different workload from ordinary SQL metadata lookup: we need full-text search across an enormous number of videos, relevance ranking, indexing, freshness, and eventually personalized results. That's still squarely part of our YouTube design.
