@@ -540,4 +540,4 @@ We've now completed:
 - **1.3 — The NoSQL Landscape** ✅
 - **1.4 — NoSQL Myths** ✅
 
-**Next: Chapter 1.5**
+**Next: Module 2**
