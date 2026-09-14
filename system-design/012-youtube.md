@@ -4273,3 +4273,2162 @@ I'd answer:
 At this point we've covered the major **content path** and **search path**.
 
 The next major YouTube workload is **the homepage/feed and recommendations**. That's where our view, like, subscription, and watch-history events become useful: turning billions of user interactions into personalized video candidates without making the homepage request perform a massive computation.
+
+---
+
+## YouTube — Homepage & Recommendations
+
+### Interviewer:
+> A user opens YouTube. How would you generate their homepage?
+
+### Candidate:
+
+I wouldn't calculate the entire homepage from scratch at request time. At YouTube scale, that would be far too expensive because we'd potentially need to consider millions or billions of videos and many different signals.
+
+Instead, I'd use a **candidate generation and ranking pipeline**.
+
+The basic idea is that we first generate a relatively small set of videos that could be relevant to the user, and then rank those candidates to decide which ones to show.
+
+For example, if the user has watched videos about football, subscribed to several football channels, and frequently watches technology videos, those behaviors become signals that can be used to generate candidates.
+
+---
+
+## 1. Where does the data come from?
+
+We've already created an event pipeline for views, likes, searches, subscriptions, and other user interactions.
+
+That gives us information such as:
+
+- what videos the user watched
+- how long they watched them
+- which videos they liked
+- which channels they subscribed to
+- what they searched for
+- which recommendations they clicked
+- which recommendations they ignored
+
+We don't want the homepage request to query all of these raw events.
+
+Instead, the event stream feeds processing systems that build useful derived information about the user.
+
+For example, we might maintain something conceptually like:
+
+```text
+User 123
+
+interests:
+  football
+  programming
+  travel
+
+frequently watched channels:
+  Channel A
+  Channel B
+
+recent topics:
+  Champions League
+  C#
+  Berlin
+```
+
+That information can be updated asynchronously as new events arrive.
+
+So if a user watches ten programming videos today, the recommendation system doesn't need to wait until tomorrow to understand that their interests have changed. The derived user profile can be updated continuously or in batches depending on the particular signal.
+
+---
+
+# 2. Candidate generation
+
+Now suppose the user opens the homepage.
+
+We don't ask:
+
+> "Which of all YouTube's videos should this person watch?"
+
+Instead, we ask several narrower questions.
+
+For example:
+
+**What videos are from channels this user follows?**
+
+**What videos are similar to things this user recently watched?**
+
+**What videos are popular among users with similar interests?**
+
+**What new videos are currently trending in this user's region or language?**
+
+Each of these can produce candidates.
+
+So perhaps we get:
+
+```text
+Subscribed channels       → 500 candidates
+Similar videos             → 500 candidates
+Trending                   → 200 candidates
+Previously watched topics  → 300 candidates
+```
+
+We combine them and remove duplicates.
+
+Now perhaps we have a few hundred or thousand candidates instead of billions of videos.
+
+That's much more manageable.
+
+---
+
+# 3. Ranking
+
+We then rank those candidates.
+
+The ranking system can consider signals such as:
+
+- relevance to the user's interests
+- previous watch behavior
+- predicted watch time
+- freshness
+- engagement
+- video quality
+- whether the user has already watched the video
+- channel relationship
+- language
+- geography
+- current popularity
+
+Initially, we could implement a relatively simple scoring system.
+
+At YouTube's scale, this would eventually become a sophisticated machine-learning ranking system, but the architectural principle stays the same:
+
+> **Candidate generation reduces the search space; ranking determines the ordering.**
+
+That's an important distinction.
+
+---
+
+# 4. Why not just use the search system?
+
+We already built a search system.
+
+But homepage recommendations and search are fundamentally different.
+
+When the user searches:
+
+> `football highlights`
+
+the user has explicitly given us a query.
+
+We need to find videos relevant to that query.
+
+For the homepage, there may be **no explicit query at all**.
+
+We have to infer what the user might want to watch.
+
+So I would keep the recommendation system separate from the search system, although they can potentially reuse some underlying infrastructure and video metadata.
+
+---
+
+# 5. Precompute versus request-time computation
+
+There's another important decision here.
+
+We could precompute recommendations periodically.
+
+For example:
+
+> Every few minutes, calculate a candidate list for each active user.
+
+Then the homepage request is cheap:
+
+```text
+GET /feed
+        ↓
+Recommendation Store
+        ↓
+Return candidate videos
+```
+
+But this isn't sufficient by itself.
+
+Suppose the user just watched five videos about Docker.
+
+We don't want to wait several hours for the next recommendation refresh.
+
+So a practical system would combine:
+
+**precomputed recommendations**
+
+with
+
+**real-time signals**.
+
+For example, the system might have a precomputed list of likely videos and then adjust it based on the user's most recent activity.
+
+This gives us a balance between latency and freshness.
+
+---
+
+# 6. Recommendation data doesn't belong in our transactional SQL database
+
+This is another place where we don't want to force everything into the SQL database.
+
+Imagine a table containing:
+
+```text
+UserId | VideoId | RecommendationScore
+```
+
+for every user and potentially thousands of recommendations per user.
+
+At YouTube scale, this becomes enormous.
+
+More importantly, the workload is different from transactional metadata.
+
+We want very fast access to something like:
+
+> "Give me the next 20 recommended videos for User 123."
+
+So I'd use a storage system optimized for this type of high-volume key-based access.
+
+The exact technology isn't important at this stage. The important design decision is that **recommendations are derived data**, not authoritative transactional data.
+
+If we lose a recommendation list, we can regenerate it from the underlying events and models.
+
+---
+
+# 7. Watch history
+
+Watch history is different.
+
+If I watched:
+
+> Video 123
+
+I expect it to appear in my watch history.
+
+That is user-specific state, so we need to persist it.
+
+A request might be:
+
+```http
+GET /users/me/history
+```
+
+and the system can retrieve the user's recent watch history efficiently.
+
+Watch history also feeds the recommendation system, but we shouldn't confuse the two.
+
+**Watch history is source data.**
+
+**Recommendations are derived data.**
+
+That's a distinction we'll use repeatedly throughout this design.
+
+---
+
+# 8. What happens when the user watches something?
+
+This connects everything we've already built.
+
+Suppose I watch a programming video for 20 minutes.
+
+The playback system produces an event.
+
+That event enters our event-processing pipeline.
+
+The event can eventually be consumed by several different systems:
+
+- analytics
+- view counting
+- recommendation processing
+- creator statistics
+- watch history
+
+We don't want playback to synchronously call five different services and wait for all of them.
+
+Instead, the event is published once and different consumers process it independently.
+
+This is one of the major benefits of the event-driven architecture we've introduced.
+
+---
+
+# 9. What happens if recommendation processing is temporarily unavailable?
+
+This is a good example of graceful degradation.
+
+Suppose the recommendation service is down.
+
+YouTube shouldn't necessarily become unusable.
+
+We could fall back to things such as:
+
+- recently watched videos
+- subscribed channels
+- popular videos
+- regional trending content
+- cached recommendations
+
+So the homepage might become less personalized temporarily, but the user can still watch videos.
+
+This is preferable to making the entire homepage unavailable.
+
+---
+
+# 10. Global recommendations
+
+We're also dealing with billions of users across different regions.
+
+We don't necessarily want every homepage request to cross the globe.
+
+The recommendation data can be generated and served regionally.
+
+For example, a user in Europe might normally hit European recommendation infrastructure, while the underlying event-processing pipeline can distribute relevant information between regions.
+
+Some recommendation signals are inherently global—for example, a video becoming extremely popular worldwide—while others are local, such as regional trends or language preferences.
+
+So we can combine both:
+
+**global signals** + **regional signals** + **user-specific signals**.
+
+---
+
+# 11. One subtle problem: recommendations can create feedback loops
+
+Suppose our system recommends a video because it is popular.
+
+People click it because we recommended it.
+
+Now its click/watch statistics increase.
+
+The system sees that it is becoming even more popular and recommends it to even more people.
+
+That can create a feedback loop where already-popular videos dominate recommendations.
+
+So a real recommendation system needs more sophisticated ranking considerations, diversity, exploration, freshness, and other mechanisms.
+
+We don't need to design the machine-learning algorithm in this system-design interview.
+
+The important architectural point is that the recommendation service consumes behavioral data and produces **derived candidate/ranking information** that can be served quickly.
+
+---
+
+# 12. Where we are now
+
+We've now covered the major YouTube paths we've introduced:
+
+### Upload
+
+Creator uploads large video files directly to object storage, using resumable uploads.
+
+### Processing
+
+Asynchronous workers transcode the video, generate thumbnails, and create streamable representations.
+
+### Storage
+
+Video bytes live in object storage, while metadata lives in SQL.
+
+### Playback
+
+The CDN serves video segments globally, keeping the high-volume video traffic away from our APIs and SQL database.
+
+### Search
+
+A dedicated distributed search index handles full-text retrieval and ranking rather than querying SQL directly.
+
+### Views and interactions
+
+High-volume events flow through an event system and are processed asynchronously.
+
+### Recommendations
+
+Those events feed derived user signals, candidate generation, and ranking rather than making the homepage perform massive synchronous computation.
+
+---
+
+# Final YouTube System Design
+
+I would design YouTube as a **globally distributed, read-heavy video platform** with:
+
+- SQL for authoritative metadata and relationships
+- Object storage for video files
+- CDN for global video delivery
+- Asynchronous processing for uploads, transcoding, views, likes, search, and recommendations
+- Regional API deployments
+- One authoritative SQL write path with regional read replicas
+- Sharding for very large datasets
+- Dedicated search infrastructure
+- A separate recommendation system
+- Queues/event streams to decouple high-volume asynchronous workloads
+
+The key design principle is: **keep the transactional system relatively simple, and move massive-volume workloads such as video delivery, view counting, search indexing, and recommendations out of the synchronous request path.**
+
+---
+
+## 1. Requirements
+
+### Functional
+
+Users should be able to:
+
+1. Upload videos.
+2. Watch videos.
+3. Search for videos.
+4. View video/channel metadata.
+5. Like and unlike videos.
+6. Comment on videos.
+7. Subscribe to channels.
+8. Receive a personalized homepage/recommendation feed.
+
+The primary design focus is uploading and watching videos at global scale.
+
+Live streaming and collaborative editing are outside this design.
+
+### Non-functional
+
+We need:
+
+- Global availability.
+- Low playback latency.
+- Very high read throughput.
+- Very large file storage.
+- High durability for uploaded videos.
+- Ability to survive individual server and regional failures.
+- Horizontal scalability.
+- Eventual consistency where appropriate.
+- Stronger consistency for ownership and user-specific transactional state.
+
+YouTube is overwhelmingly **read-heavy**. A video might be uploaded once and watched millions of times.
+
+That fact drives much of the architecture.
+
+---
+
+# 2. Data model
+
+I would keep the authoritative metadata in a relational database.
+
+### User
+
+```text
+User
+-----
+id
+name
+created_at
+```
+
+### Channel
+
+```text
+Channel
+-------
+id
+user_id
+name
+created_at
+```
+
+### Video
+
+```text
+Video
+-----
+id
+channel_id
+title
+description
+status
+created_at
+updated_at
+```
+
+`status` would be something like:
+
+```text
+UPLOADING
+PROCESSING
+READY
+FAILED
+DELETED
+```
+
+### Comment
+
+```text
+Comment
+-------
+id
+video_id
+user_id
+text
+created_at
+```
+
+### Like
+
+```text
+VideoLike
+---------
+video_id
+user_id
+created_at
+```
+
+There would be a uniqueness constraint on:
+
+```text
+(video_id, user_id)
+```
+
+so a user cannot have two authoritative likes for the same video.
+
+### Subscription
+
+```text
+Subscription
+------------
+channel_id
+user_id
+created_at
+```
+
+Again, `(channel_id, user_id)` should be unique.
+
+---
+
+## 3. Where do the actual videos go?
+
+**Not in SQL.**
+
+A 10 GB video should never become a row containing 10 GB of binary data in our relational database.
+
+We use object storage.
+
+Conceptually:
+
+```text
+Object Storage
+    |
+    +-- video-original
+    +-- video-360p
+    +-- video-720p
+    +-- video-1080p
+    +-- video-4k
+    +-- thumbnails
+```
+
+The SQL database stores metadata and references to those objects.
+
+For example:
+
+```text
+Video
+-----
+id = 123
+title = "Zurich Airport Takeoff"
+status = READY
+...
+```
+
+while object storage contains the actual encoded video files.
+
+---
+
+# 4. Database choice
+
+I would use a **relational SQL database** for the authoritative transactional data.
+
+Why?
+
+Because we have clear relationships:
+
+- User → Channel
+- Channel → Videos
+- User → Likes
+- User → Subscriptions
+- Video → Comments
+
+We also need transactions and constraints for operations such as:
+
+- creating ownership relationships
+- liking/unliking
+- subscriptions
+- updating metadata
+- maintaining authoritative state
+
+The video bytes themselves are handled by object storage, so the database doesn't have to deal with that enormous data volume.
+
+---
+
+# 5. Basic architecture
+
+Before adding all the scaling machinery, the core system is simply:
+
+```text
+Client
+   |
+   v
+API
+   |
+   +---- SQL
+   |
+   +---- Object Storage
+```
+
+The API handles business operations and metadata.
+
+Object storage handles large files.
+
+SQL handles authoritative application data.
+
+That's the foundation.
+
+---
+
+# 6. Global deployment
+
+Because users are worldwide, I would deploy the API in multiple regions.
+
+For example:
+
+```text
+Europe
+US
+Asia
+```
+
+A global traffic-routing layer directs users to an appropriate healthy API region.
+
+Each region has API servers running the same application.
+
+The important point is that **we don't need a separate independent YouTube database in every country.**
+
+For the initial architecture, I would have:
+
+- one authoritative SQL primary/write path
+- regional SQL read replicas
+- APIs deployed in multiple regions
+
+For example:
+
+```text
+                    SQL Primary
+                   /     |      \
+                  /      |       \
+                 v       v        v
+              EU Replica US Replica Asia Replica
+```
+
+Writes go through the authoritative write path.
+
+Read-heavy traffic can be served from regional replicas.
+
+This gives us geographically closer reads without introducing the complexity of multiple independent writers.
+
+---
+
+# 7. Why not multiple writable databases everywhere?
+
+Because that creates a much harder consistency problem.
+
+Suppose a user changes a video's title.
+
+At almost the same time:
+
+```text
+Europe: "Football Highlights"
+US:     "Football Highlights 2026"
+```
+
+If both regions can independently write, we need conflict resolution.
+
+For YouTube, that complexity isn't justified initially because the workload is overwhelmingly read-heavy.
+
+So our definitive choice is:
+
+> **One authoritative write path + regional read replicas.**
+
+If YouTube eventually needed extremely high geographically distributed write throughput, we could introduce more sophisticated multi-region/multi-writer architecture, but that is not necessary for this design.
+
+---
+
+# 8. Read consistency
+
+Regional replicas introduce replication lag.
+
+Suppose I upload:
+
+```text
+My New Video
+```
+
+The primary knows about it immediately.
+
+The Asian replica might receive the change slightly later.
+
+That's acceptable for many operations.
+
+For example, a video appearing in search a few seconds later is fine.
+
+But some operations need stronger guarantees.
+
+If I just changed my video title and immediately request that video's metadata, I don't want to necessarily receive the old title.
+
+So for operations requiring read-after-write consistency, we can route that request to the authoritative database or use a replication/version mechanism to ensure the replica has caught up.
+
+We don't need every read to go to the primary.
+
+---
+
+# 9. Video upload
+
+This is one of the most important parts.
+
+We should **not** do:
+
+```text
+Client → API → API receives 10 GB → Object Storage
+```
+
+because the API servers become an unnecessary bottleneck.
+
+Instead:
+
+### Step 1
+
+Client tells the API it wants to upload a video.
+
+```http
+POST /videos
+```
+
+The API creates:
+
+```text
+Video
+-----
+id = 123
+status = UPLOADING
+```
+
+and returns an upload authorization/session.
+
+### Step 2
+
+The client uploads the video **directly to object storage**.
+
+For very large files, the upload is multipart/resumable.
+
+So if a 10 GB upload fails at 8 GB, the client doesn't restart from zero.
+
+It retries the failed part.
+
+### Step 3
+
+Object storage signals that the upload has completed.
+
+### Step 4
+
+We publish a video-processing event.
+
+```text
+VideoUploaded(videoId=123)
+```
+
+### Step 5
+
+A processing worker picks it up.
+
+The video moves:
+
+```text
+UPLOADING
+    ↓
+PROCESSING
+    ↓
+READY
+```
+
+or:
+
+```text
+PROCESSING
+    ↓
+FAILED
+```
+
+---
+
+# 10. Transcoding
+
+The uploaded original video isn't necessarily suitable for every device or network.
+
+So processing workers generate multiple representations:
+
+```text
+360p
+480p
+720p
+1080p
+1440p
+4K
+```
+
+They also generate thumbnails and streaming metadata.
+
+This is asynchronous.
+
+We absolutely do **not** make the user wait synchronously inside:
+
+```http
+POST /videos
+```
+
+for potentially minutes of transcoding.
+
+The API returns quickly.
+
+The processing pipeline handles the expensive work independently.
+
+---
+
+# 11. Why a queue is necessary here
+
+Imagine someone uploads 100,000 videos in a short period.
+
+Our API shouldn't suddenly need 100,000 transcoding processes.
+
+Instead:
+
+```text
+Upload completed
+       |
+       v
+    Queue
+       |
+       v
+Transcoding workers
+```
+
+The queue provides **backpressure**.
+
+If processing capacity is temporarily lower than upload volume, videos wait in the queue instead of overwhelming the system.
+
+We can independently scale the transcoding workers.
+
+---
+
+# 12. Retries and dead-letter queues
+
+Transcoding can fail because of:
+
+- corrupt input
+- temporary infrastructure failure
+- worker failure
+- object-storage problems
+
+We retry transient failures using exponential backoff with a maximum retry count.
+
+For example:
+
+```text
+attempt 1
+   ↓
+wait
+attempt 2
+   ↓
+wait longer
+attempt 3
+```
+
+After the maximum number of attempts, the message goes to a **dead-letter queue**.
+
+That allows operators to inspect and reprocess problematic jobs.
+
+Processing must also be **idempotent**.
+
+If the same `VideoUploaded` event is delivered twice, we shouldn't create two independent sets of transcoded outputs.
+
+We can use the video ID plus a processing/version identifier as the idempotency key.
+
+---
+
+# 13. Video playback
+
+This is where the architecture changes dramatically from a normal web application.
+
+The API should **not stream the actual video bytes**.
+
+Instead:
+
+```text
+Client
+  |
+  | request video
+  v
+API
+  |
+  | playback authorization + metadata
+  v
+CDN
+  |
+  v
+Object Storage
+```
+
+The API determines that the user can access the video and provides the information needed to retrieve the content.
+
+The CDN delivers the actual video.
+
+---
+
+# 14. Why CDN is essential
+
+Suppose a video becomes viral and gets 10 million views.
+
+We don't want:
+
+```text
+10 million requests
+        ↓
+Object Storage
+```
+
+Instead, the CDN caches the video segments close to users.
+
+A user in Germany gets the content from a nearby CDN location.
+
+A user in Japan gets it from a nearby CDN location.
+
+A user in the US gets it from a US edge.
+
+The video therefore doesn't have to travel from one central server to every user.
+
+This is the primary mechanism for global video-delivery scalability.
+
+---
+
+# 15. Adaptive bitrate streaming
+
+The video is divided into small streamable segments.
+
+A client might initially request:
+
+```text
+1080p
+```
+
+but if bandwidth drops, it can switch to:
+
+```text
+720p
+```
+
+and later return to:
+
+```text
+1080p
+```
+
+The client chooses the appropriate representation based on bandwidth, buffering, device capability, etc.
+
+This prevents a poor network connection from simply causing the entire video playback to fail.
+
+---
+
+# 16. CDN caching strategy
+
+Video content is mostly immutable.
+
+Once:
+
+```text
+video-123/1080p/segment-001
+```
+
+has been generated, it doesn't normally change.
+
+That makes video content extremely cache-friendly.
+
+We can therefore give video segments long cache lifetimes.
+
+Popular videos naturally become heavily cached.
+
+We don't need to manually predict every popular video.
+
+The CDN's caching behavior handles much of this.
+
+For extremely popular content, the CDN can also use request coalescing so that many simultaneous cache misses don't all independently hit the origin.
+
+---
+
+# 17. What happens if the API goes down?
+
+This is another reason to separate the control plane from video delivery.
+
+An existing playback session may already have the necessary playback information and cached video segments.
+
+The CDN can continue serving cached content even if the API temporarily has problems.
+
+So a temporary API/database issue doesn't necessarily mean that every ongoing video playback immediately stops.
+
+The system is therefore more resilient because **video delivery isn't coupled synchronously to every video byte request.**
+
+---
+
+# 18. Video deletion
+
+Suppose a creator deletes a video.
+
+We cannot rely solely on deleting CDN files immediately.
+
+Instead, the authoritative control-plane state becomes:
+
+```text
+Video.status = DELETED
+```
+
+The playback authorization layer refuses future access.
+
+CDN objects can then be invalidated or allowed to expire according to the deletion process.
+
+This means stale CDN content doesn't automatically imply that users are still authorized to access it.
+
+---
+
+# 19. Views
+
+We should **not** do this on every view:
+
+```sql
+UPDATE Video
+SET ViewCount = ViewCount + 1
+WHERE Id = ...
+```
+
+Imagine a popular video getting thousands or millions of views per second.
+
+That creates a hot database row.
+
+Instead, playback generates events:
+
+```text
+VideoWatched
+```
+
+Those events enter an event-streaming system.
+
+Workers aggregate them.
+
+For example:
+
+```text
+Video 123
+10,000 views
+```
+
+becomes a derived count.
+
+The displayed view count can therefore be **eventually consistent**.
+
+It doesn't matter if the number displayed is:
+
+```text
+10,000
+```
+
+and becomes:
+
+```text
+10,137
+```
+
+a little later.
+
+---
+
+# 20. Event processing
+
+The event pipeline can support several independent consumers.
+
+A single watch event might be consumed by:
+
+- view-count aggregation
+- recommendation system
+- analytics
+- watch history
+- creator statistics
+
+We don't want the playback request to synchronously call all of these systems.
+
+Instead:
+
+```text
+Watch event
+    |
+    +--> View aggregation
+    +--> Recommendations
+    +--> Watch history
+    +--> Analytics
+```
+
+This is one of the major reasons event-driven architecture is valuable for YouTube.
+
+---
+
+# 21. Hot videos and partitioning
+
+Suppose one video receives enormous traffic.
+
+If all events for that video go through one partition, that partition can become a bottleneck.
+
+So for very high-volume event streams, we can partition the events across multiple buckets.
+
+For example, conceptually:
+
+```text
+VideoId + bucket
+```
+
+rather than simply:
+
+```text
+VideoId
+```
+
+Then several consumers can process the event load in parallel and a second aggregation stage can combine the results.
+
+The important point is:
+
+> **The logical entity is still one video, but the physical processing can be distributed across multiple partitions.**
+
+---
+
+# 22. Likes
+
+Likes are slightly different from views.
+
+The user's actual like relationship is authoritative.
+
+We need to know:
+
+> Has user 42 liked video 123?
+
+That should be stored as:
+
+```text
+(video_id, user_id)
+```
+
+with a uniqueness constraint.
+
+The total displayed like count doesn't need to be updated synchronously every time.
+
+So we separate:
+
+**Authoritative state**
+
+```text
+User 42 likes Video 123
+```
+
+from:
+
+**Derived state**
+
+```text
+Video 123 has 8,532,192 likes
+```
+
+The latter can be updated asynchronously.
+
+---
+
+# 23. Scaling the API
+
+Now suppose one API server isn't enough.
+
+We run multiple instances:
+
+```text
+Global traffic routing
+        |
+   Load balancing
+        |
+  +-----+-----+
+  |     |     |
+ API   API   API
+```
+
+The API layer should be stateless wherever possible.
+
+That means any API instance can handle a request.
+
+If one server dies, traffic goes to another.
+
+This gives us both:
+
+- horizontal scalability
+- higher availability
+
+These are related but different goals.
+
+Adding servers primarily increases capacity.
+
+Having multiple independent servers also allows us to survive individual server failures.
+
+---
+
+# 24. Sharding the database
+
+Eventually, one SQL database may no longer be sufficient for all metadata.
+
+At that point we shard.
+
+The important distinction is:
+
+**Replication** means:
+
+> Keep copies of the same data.
+
+**Sharding** means:
+
+> Divide the data between different database partitions.
+
+For example, users might be logically partitioned using a hash of `UserId`.
+
+Then:
+
+```text
+User 123 → Shard A
+User 456 → Shard C
+User 789 → Shard B
+```
+
+Each shard can itself have replicas.
+
+So we can combine:
+
+```text
+Sharding
++
+Replication
+```
+
+---
+
+# 25. Video sharding
+
+For videos, `ChannelId` can be a useful partitioning key because many operations are naturally channel-related.
+
+However, we must account for hot channels.
+
+If one enormous channel receives disproportionate traffic, putting everything for that channel onto one physical partition could create a hotspot.
+
+So the actual implementation can use additional partitioning/bucketing when necessary.
+
+We shouldn't blindly choose a shard key without considering the workload.
+
+---
+
+# 26. Comments
+
+Comments can naturally be partitioned around `VideoId`.
+
+But again, a viral video can become a hot partition.
+
+So at very large scale we can introduce buckets within a video's comments.
+
+For example, instead of one enormous logical partition:
+
+```text
+Video 123
+```
+
+we can physically distribute comments using:
+
+```text
+VideoId + bucket
+```
+
+The application still presents them as the comments for video 123.
+
+---
+
+# 27. Search
+
+We should **not** search YouTube by doing something like:
+
+```sql
+WHERE title LIKE '%football%'
+```
+
+against the main SQL database at YouTube scale.
+
+Instead we maintain a dedicated search index.
+
+The authoritative data remains SQL.
+
+A video change generates an event:
+
+```text
+VideoUpdated
+```
+
+The search indexing pipeline consumes it and updates the search index.
+
+So:
+
+```text
+SQL
+ |
+ | event
+ v
+Search Indexer
+ |
+ v
+Search Index
+```
+
+The search index is therefore a **derived representation** of the authoritative metadata.
+
+---
+
+# 28. Search results
+
+The search index should contain enough information to display results without querying SQL for every result.
+
+For example:
+
+```text
+video_id
+title
+thumbnail
+channel_name
+duration
+published_at
+language
+```
+
+The search engine can then perform:
+
+1. candidate retrieval
+2. relevance filtering
+3. ranking
+4. top-result selection
+
+Ranking can consider:
+
+- text relevance
+- popularity
+- freshness
+- watch time
+- engagement
+- language
+- geography
+- personalization
+
+We don't need to design the actual machine-learning algorithm for this system design.
+
+The important architectural point is that **search is handled by a specialized, distributed search system rather than transactional SQL.**
+
+---
+
+# 29. Search consistency
+
+Search can be eventually consistent.
+
+If I upload a video at:
+
+```text
+12:00:00
+```
+
+it might become searchable at:
+
+```text
+12:00:03
+```
+
+That's acceptable.
+
+We don't need to block video uploads waiting for search indexing to complete.
+
+This is another example of separating the transactional path from derived systems.
+
+---
+
+# 30. Recommendations
+
+The homepage shouldn't calculate every recommendation from scratch every time a user opens YouTube.
+
+We instead maintain derived recommendation information.
+
+User activity generates signals:
+
+- videos watched
+- watch duration
+- likes
+- subscriptions
+- searches
+- clicks
+- skipped recommendations
+- recent interests
+
+Those signals feed the recommendation pipeline.
+
+Candidate videos can come from:
+
+- subscribed channels
+- similar videos
+- trending videos
+- recently watched topics
+- popular content
+- personalized sources
+
+Then a ranking service ranks those candidates.
+
+The important optimization is:
+
+> **Candidate generation first, ranking second.**
+
+We don't want to evaluate every YouTube video for every user.
+
+---
+
+# 31. Recommendation storage
+
+Recommendations are derived data.
+
+They don't need the same transactional guarantees as ownership or payment information.
+
+So they can live in a fast, distributed key-value system or similar specialized storage.
+
+For example:
+
+```text
+User 123
+    →
+[Video 91, Video 42, Video 817, ...]
+```
+
+We can precompute recommendations periodically and combine them with fresh real-time signals.
+
+---
+
+# 32. Recommendation failure
+
+The recommendation system should not be a single point of failure for the homepage.
+
+If it becomes unavailable, we can fall back to:
+
+- cached recommendations
+- subscribed channels
+- trending videos
+- popular videos
+- recently watched content
+
+So the user can still receive a useful homepage.
+
+This is an example of **graceful degradation**.
+
+---
+
+# 33. Failure of the SQL primary
+
+Suppose the authoritative SQL primary fails.
+
+We have regional replicas.
+
+We select a replica that is sufficiently caught up and promote it to become the new authoritative primary.
+
+We then update service discovery/routing so writes go there.
+
+The old primary must be **fenced off** so it cannot start accepting writes again and create split brain.
+
+When the old machine eventually returns, we don't simply make it primary again.
+
+We reconcile/reseed it and bring it back as a replica.
+
+---
+
+# 34. Replication trade-off
+
+Our initial architecture uses asynchronous replication because this keeps geographically distributed writes relatively fast.
+
+The trade-off is that if the primary dies immediately after acknowledging a write, a replica might not yet have received that write.
+
+That creates a possible small **RPO**.
+
+We accept that for many YouTube metadata operations.
+
+If a particular piece of data required stronger durability, we could use stronger replication guarantees for that specific workload.
+
+We don't need to impose the highest consistency/durability cost on the entire platform.
+
+---
+
+# 35. Observability
+
+Every major component needs:
+
+### Metrics
+
+Examples:
+
+- API latency
+- API error rate
+- upload success rate
+- transcoding queue depth
+- transcoding duration
+- CDN cache hit ratio
+- playback failures
+- search latency
+- recommendation latency
+- database replication lag
+
+### Logs
+
+Structured logs should allow us to correlate events around:
+
+```text
+VideoId
+UserId
+RequestId
+```
+
+where appropriate.
+
+### Distributed tracing
+
+For a request that crosses multiple services, traces allow us to see where latency is being introduced.
+
+This is particularly useful for flows such as:
+
+```text
+API → authorization → metadata → playback information
+```
+
+or:
+
+```text
+Upload → queue → transcoding → object storage → indexing
+```
+
+---
+
+# 36. Final architecture
+
+So the **definitive design** is:
+
+### Synchronous control plane
+
+- Global traffic routing
+- Stateless regional API servers
+- SQL as authoritative metadata/relationship store
+- One authoritative write path
+- Regional read replicas
+- Sharding as SQL data volume grows
+
+### Video data plane
+
+- Object storage for original and transcoded video
+- Multiple encoded resolutions
+- CDN for global delivery
+- Adaptive bitrate streaming
+- Long-lived caching for immutable video segments
+
+### Asynchronous processing
+
+- Upload completion events
+- Transcoding queue/workers
+- Thumbnail generation
+- View aggregation
+- Like-count aggregation
+- Search indexing
+- Recommendation processing
+- Analytics
+- Watch history
+
+### Specialized systems
+
+- Search index for full-text search and ranking
+- Distributed key/value storage for recommendation data
+- Event streaming infrastructure for high-volume activity
+
+### Reliability
+
+- Multiple API instances
+- Multiple regions
+- Database replicas
+- Automated database failover
+- Retry with exponential backoff
+- Dead-letter queues
+- Idempotent event processing
+- CDN caching
+- Graceful recommendation/search degradation
+
+---
+
+# 37. The complete request flows
+
+### Upload
+
+```text
+Client
+  → API: create video
+  → SQL: create UPLOADING record
+  → Object Storage: direct resumable upload
+  → Upload-complete event
+  → Queue
+  → Transcoding workers
+  → Object Storage: encoded versions
+  → SQL: READY
+  → Search index update
+```
+
+### Watch
+
+```text
+Client
+  → Regional API
+  → authorization + video metadata
+  → CDN
+  → video segments
+```
+
+The API does **not** carry the video bytes.
+
+### Search
+
+```text
+Video metadata
+  → SQL
+  → event
+  → indexer
+  → search index
+  → user search
+  → ranked results
+```
+
+### Watch activity
+
+```text
+Playback
+  → watch event
+  → event stream
+  → view aggregation
+  → recommendation signals
+  → watch history
+  → analytics
+```
+
+These pipelines operate independently.
+
+---
+
+# 38. The most important design decisions
+
+If I had to summarize the interview in a few concrete decisions, I'd say:
+
+1. **SQL is the source of truth for metadata and relationships.**
+2. **Object storage holds the actual video files.**
+3. **The API never proxies multi-GB video files.**
+4. **Users upload directly to object storage using resumable uploads.**
+5. **Transcoding is asynchronous and handled by independently scalable workers.**
+6. **A CDN delivers video globally.**
+7. **Regional API deployments provide global availability and low-latency control-plane access.**
+8. **We use one authoritative SQL write path with regional read replicas rather than immediately introducing multi-master writes.**
+9. **Views and other enormous event volumes are processed asynchronously instead of synchronously updating SQL rows.**
+10. **Search uses a dedicated distributed search index rather than SQL text queries.**
+11. **Recommendations are derived data generated from user activity and served from specialized fast storage.**
+12. **Sharding is introduced when the authoritative data volume exceeds the capacity of a single database, and shards can themselves be replicated.**
+13. **Queues provide backpressure, retries, and isolation for expensive asynchronous workloads.**
+14. **Idempotency is required because event delivery can be duplicated.**
+15. **The system accepts eventual consistency for derived data while preserving stronger consistency for authoritative user relationships and ownership.**
+16. **Every major component can fail independently without bringing down the entire platform.**
+
+That is the final YouTube design I'd present in an interview. It is detailed enough to demonstrate the important distributed-systems decisions without turning the interview into an attempt to recreate every internal subsystem of YouTube.
+
+## Follow-ups
+
+### 1. How does YouTube know which object to retrieve?
+
+The `Video` table should contain a reference to the video's objects in object storage.
+
+But I would **not store a full public URL** as the primary reference. URLs can change if we change buckets, storage providers, regions, CDN configuration, etc.
+
+Instead, store an **object key/path** (and potentially the storage bucket/container).
+
+For example:
+
+```text
+Video
+-----
+id
+channel_id
+title
+description
+status
+original_object_key
+created_at
+updated_at
+```
+
+A row might conceptually look like:
+
+```text
+id                  = 123
+channel_id          = 42
+title               = "Zurich Airport Takeoff"
+status              = READY
+original_object_key = "videos/123/original/source.mp4"
+```
+
+Then the transcoding process creates the derived objects:
+
+```text
+videos/123/original/source.mp4
+videos/123/360p/...
+videos/123/720p/...
+videos/123/1080p/...
+videos/123/4k/...
+videos/123/thumbnail.jpg
+```
+
+There are two reasonable ways to model those derived objects.
+
+#### Option A — keep the keys in `Video`
+
+For a simplified system:
+
+```text
+Video
+-----
+id
+channel_id
+title
+description
+status
+
+original_object_key
+manifest_object_key
+thumbnail_object_key
+
+created_at
+updated_at
+```
+
+The `manifest_object_key` points to the streaming manifest that tells the player which video representations/segments are available.
+
+For example:
+
+```text
+videos/123/manifest.m3u8
+```
+
+The manifest then references the individual 360p/720p/1080p segments.
+
+#### Option B — separate `VideoAsset` table
+
+For the final large-scale design, **I'd actually choose this** because the number of generated assets can grow and we may add new formats later.
+
+```text
+VideoAsset
+----------
+id
+video_id
+asset_type
+resolution
+object_key
+created_at
+```
+
+Example:
+
+```text
+video_id | asset_type | resolution | object_key
+---------|------------|------------|-----------------------------
+123      | ORIGINAL   | -          | videos/123/original/source.mp4
+123      | VIDEO      | 360p       | videos/123/360p/...
+123      | VIDEO      | 720p       | videos/123/720p/...
+123      | VIDEO      | 1080p      | videos/123/1080p/...
+123      | VIDEO      | 4K         | videos/123/4k/...
+123      | MANIFEST   | -          | videos/123/manifest.m3u8
+123      | THUMBNAIL  | -          | videos/123/thumbnail.jpg
+```
+
+So the relationship is:
+
+**SQL → object key → object storage**
+
+The API can look up the appropriate asset and then generate/provide a CDN URL or signed access URL.
+
+For example, conceptually:
+
+```text
+Video 123
+    ↓
+VideoAsset
+    ↓
+object_key = videos/123/manifest.m3u8
+    ↓
+CDN / object storage
+```
+
+The important distinction is that **SQL doesn't contain the video itself**. It contains the metadata and the identifier needed to locate the video assets.
+
+---
+
+### 2. ViewCount
+
+You're absolutely right here too.
+
+I said:
+
+```sql
+UPDATE Video
+SET ViewCount = ViewCount + 1
+```
+
+without putting `ViewCount` in the schema.
+
+More importantly, given the architecture we chose, I don't actually want `ViewCount` to be an authoritative transactional field that gets updated on every view.
+
+So I'd explicitly model it as **derived/aggregated data**.
+
+The `Video` table remains:
+
+```text
+Video
+-----
+id
+channel_id
+title
+description
+status
+created_at
+updated_at
+```
+
+Then we have something like:
+
+```text
+VideoStatistics
+---------------
+video_id
+view_count
+like_count
+comment_count
+updated_at
+```
+
+This is a **derived statistics table**, not the source of truth for individual view events.
+
+For example:
+
+```text
+video_id | view_count | like_count | comment_count
+---------|------------|------------|-------------
+123      | 8,532,192  | 421,832    | 18,293
+```
+
+The event pipeline updates these aggregates asynchronously.
+
+So the actual flow is:
+
+```text
+User watches video
+        ↓
+Watch event
+        ↓
+Event stream
+        ↓
+View aggregation workers
+        ↓
+VideoStatistics.view_count
+```
+
+We therefore **do not execute a SQL update for every individual view**.
+
+The aggregation worker might accumulate thousands of events and periodically update the aggregate:
+
+```text
+VideoStatistics
+view_count = 8,532,192
+```
+
+This is why the displayed count can be slightly behind the actual number of views.
+
+---
+
+### One more important distinction
+
+There are now three different things:
+
+#### 1. Individual watch events
+
+The event stream receives things such as:
+
+```text
+video_id
+user_id/session_id
+timestamp
+event_type
+```
+
+These are the raw activity events.
+
+#### 2. Aggregated statistics
+
+```text
+VideoStatistics
+---------------
+video_id
+view_count
+like_count
+comment_count
+updated_at
+```
+
+This is optimized for displaying statistics.
+
+#### 3. Authoritative like relationship
+
+```text
+VideoLike
+---------
+video_id
+user_id
+created_at
+```
+
+This answers:
+
+> "Has this particular user liked this particular video?"
+
+That's different from:
+
+> "How many total likes does this video have?"
+
+The first needs stronger correctness guarantees; the second can be eventually consistent.
+
+---
+
+### So the corrected core schema is
+
+I'd now consider this the definitive version:
+
+```text
+User
+----
+id
+name
+created_at
+
+
+Channel
+-------
+id
+user_id
+name
+created_at
+
+
+Video
+-----
+id
+channel_id
+title
+description
+status
+created_at
+updated_at
+
+
+VideoAsset
+----------
+id
+video_id
+asset_type
+resolution
+object_key
+created_at
+
+
+VideoStatistics
+---------------
+video_id
+view_count
+like_count
+comment_count
+updated_at
+
+
+Comment
+-------
+id
+video_id
+user_id
+text
+created_at
+
+
+VideoLike
+---------
+video_id
+user_id
+created_at
+
+
+Subscription
+------------
+channel_id
+user_id
+created_at
+```
+
+And the storage relationship is explicitly:
+
+**`Video` → `VideoAsset.object_key` → Object Storage**
+
+while statistics are:
+
+**watch events → aggregation pipeline → `VideoStatistics`**
+
+That fixes both inconsistencies in the previous "final" design.
+
+### Why separate VideoStatistics from Video?
+
+Suppose we put this directly in `Video`:
+
+```text id="4g7q0v"
+Video
+-----
+id
+channel_id
+title
+description
+status
+view_count
+like_count
+comment_count
+created_at
+updated_at
+```
+
+The problem isn't that the row is physically incapable of handling those fields. The problem is that **`Video` contains relatively stable metadata while the statistics are extremely high-churn data.**
+
+For example:
+
+```text id="x2q8l7"
+Video.title
+Video.description
+Video.status
+```
+
+might change occasionally.
+
+But:
+
+```text id="v3c5nd"
+view_count
+like_count
+comment_count
+```
+
+can change constantly.
+
+More importantly, `view_count` for a viral video could receive an enormous number of updates.
+
+### But there's an important nuance
+
+Separating `VideoStatistics` **doesn't magically solve the hot-row problem**.
+
+If we did:
+
+```sql id="1yr7qk"
+UPDATE VideoStatistics
+SET view_count = view_count + 1
+WHERE video_id = 123;
+```
+
+for every view, we'd still have a hot row.
+
+So the actual solution is:
+
+> **Separate the high-churn statistics from the relatively stable video metadata, AND update the statistics asynchronously through aggregation rather than once per view.**
+
+For example:
+
+```text id="xv3p1a"
+Millions of watch events
+          ↓
+     Event stream
+          ↓
+   Aggregation workers
+          ↓
+VideoStatistics
+```
+
+The statistics row might then be updated periodically:
+
+```text id="kq2h5e"
+video_id = 123
+view_count = 8,532,192
+```
+
+rather than millions of times per second.
+
+---
+
+### So why keep `VideoStatistics` separate?
+
+There are several benefits:
+
+**1. Different update patterns**
+
+`Video` is relatively stable.
+
+`VideoStatistics` is high-churn.
+
+**2. Different consistency requirements**
+
+Video metadata such as ownership/status may require stronger consistency.
+
+Statistics can be eventually consistent.
+
+**3. Different scaling strategies**
+
+Eventually we may want to partition, cache, or aggregate statistics independently from video metadata.
+
+**4. Avoid unnecessary contention**
+
+Keeping frequently changing statistics out of the main `Video` row means metadata operations aren't competing with the high-volume statistics workload at the same logical record.
+
+**5. It makes the architecture explicit**
+
+The schema communicates:
+
+> "These numbers are derived statistics, not authoritative video state."
+
+---
+
+### But is the separate table absolutely necessary?
+
+**No.**
+
+For a smaller system, I'd happily put:
+
+```text
+view_count
+like_count
+comment_count
+```
+
+on `Video`.
+
+For our **YouTube-scale design**, I'd keep `VideoStatistics` separate because the workload is fundamentally different.
+
+And again, the most important point is:
+
+**The separation itself doesn't solve the hot-row problem. The asynchronous aggregation architecture does.**
