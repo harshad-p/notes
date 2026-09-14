@@ -75,6 +75,7 @@ Before writing substantial JavaScript, we establish what we're actually working 
 - Returning from functions
 - Nested calls
 - Recursion and stack overflow
+- **Stack frames** — what an individual entry on the call stack represents.
 
 ### 1.5 Statements and expressions
 - What a statement is
