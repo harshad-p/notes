@@ -422,6 +422,115 @@ As you progress through this course, you'll repeatedly encounter this principle:
 
 That principle is more useful than memorizing a list of "SQL vs. NoSQL" differences.
 
+## Interview Topics
+
+### 1. Why would a company choose MongoDB instead of PostgreSQL?
+
+A company might choose **MongoDB** when the application's data is naturally document-oriented and the workload benefits from storing and retrieving related data as a single document.
+
+Typical reasons include:
+
+- **Document-shaped data** — application objects map naturally to documents.
+- **Flexible schema** — different documents can evolve without requiring every change to be a relational schema migration.
+- **Denormalization** — related data can be embedded, reducing the need for JOINs.
+- **Horizontal scaling** — MongoDB provides built-in sharding for distributing data across nodes.
+- **High availability** — replica sets provide redundancy and automatic failover.
+- **Rapidly evolving applications** — useful when the data model changes frequently.
+
+PostgreSQL may still be better when the application has complex relationships, strong relational integrity requirements, extensive JOINs, or sophisticated transactional requirements.
+
+**Interview answer:**
+
+> I'd choose MongoDB when the data is naturally document-oriented, access patterns favor retrieving related data together, and flexible schema evolution and horizontal scaling are important. I wouldn't choose it simply because it's "NoSQL" or supposedly faster.
+
+---
+
+### 2. Why might DynamoDB be a terrible choice for a particular application?
+
+DynamoDB is highly optimized for **predictable, known access patterns at large scale**. It can be a poor choice when an application requires flexible, relational-style querying.
+
+For example, imagine an analytics application where users can arbitrarily filter, sort, aggregate, and JOIN data across many entities.
+
+DynamoDB can become awkward because:
+
+- Data modeling is heavily driven by **known access patterns**.
+- Arbitrary queries are not its strength.
+- JOINs are not a native relational operation.
+- Complex relationships can require denormalization or multiple application-level queries.
+- Poorly designed partition keys can create **hot partitions**.
+- Ad-hoc analytical workloads are generally better suited to other database systems.
+
+**Interview answer:**
+
+> DynamoDB can be a terrible choice when the workload is unpredictable or query-heavy, especially when users need arbitrary filtering, complex relationships, JOINs, or analytical queries. DynamoDB works best when access patterns are well understood and the data can be modeled around those patterns.
+
+---
+
+### 3. When is SQL clearly the better choice?
+
+SQL is usually the better choice when the application fundamentally depends on **relationships, constraints, transactions, and flexible querying**.
+
+Examples include:
+
+- Financial/accounting systems
+- Order and payment processing
+- Systems with many related entities
+- Applications requiring strong referential integrity
+- Complex reporting and analytical queries
+- Workloads requiring many JOINs
+- Applications where requirements cannot easily predict future query patterns
+
+For example, an e-commerce system might have:
+
+`Customers → Orders → OrderItems → Products → Payments`
+
+If the application frequently needs to query and combine these relationships while maintaining strong transactional guarantees, a relational database such as PostgreSQL can be a much more natural fit.
+
+**Interview answer:**
+
+> SQL is clearly preferable when relationships and data integrity are central to the application, especially when we need complex JOINs, constraints, transactions, and flexible ad-hoc queries. I wouldn't introduce NoSQL just because the application needs to scale.
+
+---
+
+### 4. What does "schema flexibility" actually mean?
+
+**Schema flexibility does not mean having no schema.**
+
+It means the database does not necessarily require every record to conform to one rigid structure enforced in the same way as a traditional relational table.
+
+For example, documents could evolve from:
+
+```json
+{
+  "name": "Alice",
+  "email": "alice@example.com"
+}
+```
+
+to:
+
+```json
+{
+  "name": "Alice",
+  "email": "alice@example.com",
+  "phone": "+49..."
+}
+```
+
+without requiring an `ALTER TABLE` operation to add a column.
+
+However, the application may still have an expected schema, validation rules, API contracts, serialization models, or database-level validation.
+
+The important distinction is:
+
+> **Schema flexibility means the stored data structure can evolve more easily; it does not mean the application has no schema or structure.**
+
+The trade-off is that flexibility can move some responsibility from the database to the application. If poorly managed, documents can become inconsistent and difficult to maintain.
+
+**Interview answer:**
+
+> Schema flexibility means the database allows records to evolve without requiring every structural change to be applied uniformly through a rigid schema migration. It doesn't mean there is no schema. The application still needs a consistent data model and validation strategy.
+
 ### Module 1 status
 
 We've now completed:
