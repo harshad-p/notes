@@ -47,8 +47,8 @@ func createProductHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	encoder := json.NewEncoder(w)
-	responseText := encoder.Encode(product)
-	fmt.Fprintln(w, responseText)
+	encoder.Encode(product)
+	//fmt.Fprintln(w, responseText) not needed
 }
 
 func main() {
