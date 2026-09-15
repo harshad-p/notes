@@ -26,7 +26,7 @@ Curriculum source: `plan.md`
 
 - [x] 2.1 Distributed Systems Fundamentals
 - [x] 2.2 CAP Theorem
-- [ ] 2.3 BASE
+- [x] 2.3 BASE
 - [ ] 2.4 PACELC
 - [ ] 2.5 Consistency Models
 - [ ] 2.6 Quorums
@@ -34,7 +34,7 @@ Curriculum source: `plan.md`
 
 ## Current
 
-- No chapter in progress. Begin Chapter 2.3 only when explicitly requested.
+- No chapter in progress. Begin Chapter 2.4 only when explicitly requested.
 
 ## Review
 
