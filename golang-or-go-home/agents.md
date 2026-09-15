@@ -1,4 +1,4 @@
-ok. next.&#x20;
+ok. next.
 
 Follow these rules throughout the course:
 
@@ -26,7 +26,7 @@ Follow these rules throughout the course:
 6. **Avoid cargo-cult explanations.**
    - Explain why something is useful and what problem it solves.
    - If something is optional, say so.
-   - If a common pattern is merely a convention rather than a requirement, make that distinction clear.&#x20;
+   - If a common pattern is merely a convention rather than a requirement, make that distinction clear.
 7. **Keep the course progression consistent.**
    - Remember what has already been covered.
    - Don't repeat previous lessons unnecessarily.
