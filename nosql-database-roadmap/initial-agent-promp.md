@@ -1,9 +1,9 @@
-Read `plan.md` and `AGENTS.md`.
+This NoSQL course is already in progress.
 
-I want to begin the curriculum from the beginning.
+Read `plan.md`, `progress.md`, and the existing chapter files first.
 
-Start with Module 1, Chapter 1.1
+Determine where the course currently stands and continue from the **next unfinished chapter** in `plan.md`.
 
-Follow the teaching instructions in `AGENTS.md`. In particular, introduce terminology properly before using it, assume I am an experienced backend developer, avoid unnecessary diagrams, and focus on practical system-design reasoning rather than beginner programming concepts.
+Do not restart, summarize previous material, or guess missing curriculum.
 
-Do not move to the next lesson until I explicitly ask.
+Follow `agents.md` for teaching style and course rules.
