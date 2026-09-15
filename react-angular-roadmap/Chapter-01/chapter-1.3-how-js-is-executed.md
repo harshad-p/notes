@@ -651,3 +651,73 @@ Answer these:
 5. After each invocation returns, what happens to execution?
 
 Don't worry about the call stack yet — we'll formally introduce that next.
+
+- global execution context
+- 2
+- different
+- 5, 10
+- the function execution context is popped
+
+Let's go through them precisely.
+
+1. **What execution context exists when the program starts?**  
+   ✅ **Global execution context.**
+
+2. **How many function execution contexts are created?**  
+   ✅ **2.**  
+   `calculate(5)` creates one, and `calculate(10)` creates another.
+
+3. **Same function execution context or different ones?**  
+   ✅ **Different ones.**  
+   Each **invocation** of a function gets its own function execution context. The function definition is the same, but the execution contexts are separate.
+
+4. **What value does `x` have in each invocation?**  
+   ✅ **5 and 10.**
+   - First invocation → `x = 5`
+   - Second invocation → `x = 10`
+
+   Consequently, each invocation also has its own `doubled` variable.
+
+5. **After each invocation returns, what happens to execution?**  
+   ✅ **The function's execution context is removed from the call stack (popped), and execution resumes in the caller's context.**
+
+So your mental model is now:
+
+```text
+Program starts
+    ↓
+Global execution context
+    ↓
+calculate(5)
+    ↓
+Function execution context #1
+x = 5
+doubled = 10
+    ↓
+return
+    ↓
+Function context #1 removed
+    ↓
+calculate(10)
+    ↓
+Function execution context #2
+x = 10
+doubled = 20
+    ↓
+return
+    ↓
+Function context #2 removed
+    ↓
+Global execution continues
+```
+
+One particularly important point: **the function execution context belongs to the invocation, not to the function definition.**
+
+That's why this:
+
+```js
+calculate(5);
+calculate(10);
+```
+
+creates **two** function execution contexts, even though there is only **one** function named `calculate`.
