@@ -804,7 +804,7 @@ Also test an endpoint that **only writes a body** without explicitly calling `Wr
 
 You should be able to explain why your wrapper records `200` in that case.
 
-You're right to call that out. The `*` is **not because we're implementing an interface**. It's because `w` needs to be a **pointer receiver** for this particular type.
+## Why func (w *responseWriter) WriteHeader(statusCode int) has a pointer? 
 
 There are two separate concepts here.
 
