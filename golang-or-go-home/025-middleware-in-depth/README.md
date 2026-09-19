@@ -804,4 +804,140 @@ Also test an endpoint that **only writes a body** without explicitly calling `Wr
 
 You should be able to explain why your wrapper records `200` in that case.
 
+You're right to call that out. The `*` is **not because we're implementing an interface**. It's because `w` needs to be a **pointer receiver** for this particular type.
+
+There are two separate concepts here.
+
+### 1. Implementing an interface does not require `*`
+
+For example:
+
+```go
+type Speaker interface {
+    Speak()
+}
+
+type Dog struct{}
+
+func (d Dog) Speak() {
+    fmt.Println("Woof")
+}
+```
+
+`Dog` implements `Speaker`. No `*` is required.
+
+You could also write:
+
+```go
+func (d *Dog) Speak() {
+    fmt.Println("Woof")
+}
+```
+
+In that case, **`*Dog` implements `Speaker`**, not `Dog`.
+
+So the choice of value vs pointer receiver is independent of the fact that an interface is involved.
+
+---
+
+### 2. Why `responseWriter` needs a pointer receiver
+
+Our type was:
+
+```go
+type responseWriter struct {
+    http.ResponseWriter
+    statusCode  int
+    wroteHeader bool
+}
+```
+
+And:
+
+```go
+func (w *responseWriter) WriteHeader(statusCode int) {
+    w.statusCode = statusCode
+    w.wroteHeader = true
+    w.ResponseWriter.WriteHeader(statusCode)
+}
+```
+
+We want `WriteHeader` to modify the **actual `responseWriter` instance**:
+
+```go
+w.statusCode = statusCode
+w.wroteHeader = true
+```
+
+A value receiver:
+
+```go
+func (w responseWriter) WriteHeader(statusCode int)
+```
+
+would give the method a **copy** of the struct.
+
+So modifications would happen to the copy, not the original wrapper.
+
+That's why we use:
+
+```go
+*responseWriter
+```
+
+It means:
+
+> `w` is a pointer to the actual `responseWriter`, so modifications affect the original object.
+
+This is the same pointer-receiver concept we already covered earlier with structs and methods.
+
+---
+
+### The important distinction
+
+Think of these as two independent questions:
+
+**Question 1: What does the receiver need to be?**
+
+```go
+func (w responseWriter) ...
+```
+
+vs.
+
+```go
+func (w *responseWriter) ...
+```
+
+This is about **value vs pointer semantics**.
+
+**Question 2: Does the type implement an interface?**
+
+That depends on the method set of the type.
+
+With:
+
+```go
+func (w *responseWriter) WriteHeader(...)
+```
+
+the pointer type `*responseWriter` has that method.
+
+And because we're passing:
+
+```go
+rw := &responseWriter{...}
+next.ServeHTTP(rw, r)
+```
+
+`rw` is a `*responseWriter`, so it is the type being used as the `http.ResponseWriter`.
+
+### One correction to my Lesson 33 teaching
+
+I should have explicitly said:
+
+> "We're using a pointer receiver because the wrapper's methods need to mutate its state. The `*` has nothing specifically to do with implementing `http.ResponseWriter`."
+
+You already learned pointer receivers earlier, so I should have connected this to that concept instead of silently introducing the `*` in the interface example.
+
 ### Next: Lesson 34 — Request Context: Cancellation, Deadlines & Passing Request-Scoped Data
