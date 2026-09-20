@@ -104,27 +104,28 @@ A lesson counts as complete when its concepts are understood **and** its exercis
 
 ## Phase 8 — Go Depth Where the Service Demands It
 
-- [ ] Lesson 46 — The type system and interfaces in depth
-- [ ] Lesson 47 — Generics where they earn their place
-- [ ] Lesson 48 — Packages, standard library, and maintainable boundaries
+- [ ] Lesson 46 — Go's type system in depth
+- [ ] Lesson 47 — Interfaces in depth
+- [ ] Lesson 48 — Generics where they earn their place
+- [ ] Lesson 49 — Packages, standard library, and maintainable boundaries
 
 ## Phase 9 — External Systems and Concurrency
 
-- [ ] Lesson 49 — HTTP clients and failure-aware integration
-- [ ] Lesson 50 — Concurrency foundations
-- [ ] Lesson 51 — Concurrency patterns and failure modes
-- [ ] Lesson 52 — Background jobs and queues
-- [ ] Lesson 53 — Kafka and event-driven workflows
+- [ ] Lesson 50 — HTTP clients and failure-aware integration
+- [ ] Lesson 51 — Concurrency foundations
+- [ ] Lesson 52 — Concurrency patterns and failure modes
+- [ ] Lesson 53 — Background jobs and queues
+- [ ] Lesson 54 — Kafka and event-driven workflows
 
 ## Phase 10 — Operate It in Production
 
-- [ ] Lesson 54 — Configuration, startup, and graceful shutdown
-- [ ] Lesson 55 — Observability and production debugging
-- [ ] Lesson 56 — Reliability and security engineering
-- [ ] Lesson 57 — Performance and Go runtime diagnostics
-- [ ] Lesson 58 — Delivery, deployment, and architecture review
+- [ ] Lesson 55 — Configuration, startup, and graceful shutdown
+- [ ] Lesson 56 — Observability and production debugging
+- [ ] Lesson 57 — Reliability and security engineering
+- [ ] Lesson 58 — Performance and Go runtime diagnostics
+- [ ] Lesson 59 — Delivery, deployment, and architecture review
 
 ## Phase 11 — Professional Go Backend Proficiency
 
-- [ ] Lesson 59 — Production service and design defense
-- [ ] Lesson 60 — Demonstrate professional proficiency
+- [ ] Lesson 60 — Production service and design defense
+- [ ] Lesson 61 — Demonstrate professional proficiency
