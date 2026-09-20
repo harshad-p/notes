@@ -14,8 +14,8 @@
 # Compiled lesson binaries. `go build` with no -o writes an extensionless
 # executable named after the module into the lesson folder, which the patterns
 # above do not catch on macOS or Linux.
-[0-9][0-9][0-9]-*/[0-9][0-9][0-9]-*
-001-understanding-a-go-project/hello-go
+**/[0-9][0-9][0-9]-*/[0-9][0-9][0-9]-*
+**/001-understanding-a-go-project/hello-go
 
 # Code coverage profiles and other test artifacts
 *.out

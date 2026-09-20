@@ -8,78 +8,78 @@ A lesson counts as complete when its concepts are understood **and** its exercis
 
 ## Phase 1 — Go Foundations
 
-`000-install-go`
+`phase-01-go-foundations/000-install-go`
 
 - [x] Lesson 0 — Install Go
 
-`001-understanding-a-go-project`
+`phase-01-go-foundations/001-understanding-a-go-project`
 
 - [x] Lesson 1 — Understanding a Go project
 
-`002-structure-of-a-go-program`
+`phase-01-go-foundations/002-structure-of-a-go-program`
 
 - [x] Lesson 2 — Structure of a Go program
 
-`003-go-basic-types`
+`phase-01-go-foundations/003-go-basic-types`
 
 - [x] Lesson 3 — Variables
 - [x] Lesson 4 — Basic types
 - [x] Lesson 5 — Constants
 
-`004-go-functions`
+`phase-01-go-foundations/004-go-functions`
 
 - [x] Lesson 6 — Functions
 - [x] Lesson 7 — Multiple return values
 
-`005-if-else-and-loops`
+`phase-01-go-foundations/005-if-else-and-loops`
 
 - [x] Lesson 8 — If/else and loops
 
-`006-arrays-and-slices`
+`phase-01-go-foundations/006-arrays-and-slices`
 
 - [x] Lesson 9 — Slices
 - [x] Lesson 10 — Arrays versus slices
 
-`007-maps`
+`phase-01-go-foundations/007-maps`
 
 - [x] Lesson 11 — Maps
 
-`008-structs`
+`phase-01-go-foundations/008-structs`
 
 - [x] Lesson 12 — Structs
 - [x] Lesson 13 — Methods and receivers
 - [x] Lesson 14 — Pointers
 - [x] Lesson 15 — Interfaces
 
-`009-errors`
+`phase-01-go-foundations/009-errors`
 
 - [x] Lesson 16 — Error handling
 
 ## Phase 2 — Organizing Go Code and Connecting Language Features
 
-- [x] Lesson 17 / `010-packages-and-modules` — Packages and modules
-- [x] Lesson 18 / `011-pointers-structs-interfaces` — A small service boundary
-- [x] Lesson 19 / `012-defer` — Cleanup with `defer`
-- [x] Lesson 20 / `013-external-dependencies` — Dependencies
-- [x] Lesson 21 / `014-strings` — Strings in Go
-- [x] Lesson 22 / `015-pointers-part-2` — Pointer syntax in practice
-- [x] Lesson 23 / `016-struct-embedding-and-composition` — Composition
-- [x] Lesson 24 / `017-struct-tags-and-json` — JSON at the model boundary
+- [x] Lesson 17 / `phase-02-organizing-go-code/010-packages-and-modules` — Packages and modules
+- [x] Lesson 18 / `phase-02-organizing-go-code/011-pointers-structs-interfaces` — A small service boundary
+- [x] Lesson 19 / `phase-02-organizing-go-code/012-defer` — Cleanup with `defer`
+- [x] Lesson 20 / `phase-02-organizing-go-code/013-external-dependencies` — Dependencies
+- [x] Lesson 21 / `phase-02-organizing-go-code/014-strings` — Strings in Go
+- [x] Lesson 22 / `phase-02-organizing-go-code/015-pointers-part-2` — Pointer syntax in practice
+- [x] Lesson 23 / `phase-02-organizing-go-code/016-struct-embedding-and-composition` — Composition
+- [x] Lesson 24 / `phase-02-organizing-go-code/017-struct-tags-and-json` — JSON at the model boundary
 
 ## Phase 3 — Building the HTTP API
 
-- [x] Lesson 25 / `018-JSON-in-HTTP-APIs` — HTTP request and response bodies
-- [x] Lesson 26 / `019-http-routing-methods-and-status-codes` — Methods, routing, status codes
-- [x] Lesson 27 / `020-url-paths-query-parameters-and-path-parameters` — URL input
-- [x] Lesson 28 / `021-http-router` — `ServeMux` route patterns
-- [x] Lesson 29 / `022-type-conversion-and-parsing` — Turning URL strings into Go values
-- [x] Lesson 30 / `023-json-api-request-response-model` — API contracts and validation
-- [x] Lesson 31 / `024-consistent-api-responses` — Consistent JSON responses
+- [x] Lesson 25 / `phase-03-building-the-http-api/018-JSON-in-HTTP-APIs` — HTTP request and response bodies
+- [x] Lesson 26 / `phase-03-building-the-http-api/019-http-routing-methods-and-status-codes` — Methods, routing, status codes
+- [x] Lesson 27 / `phase-03-building-the-http-api/020-url-paths-query-parameters-and-path-parameters` — URL input
+- [x] Lesson 28 / `phase-03-building-the-http-api/021-http-router` — `ServeMux` route patterns
+- [x] Lesson 29 / `phase-03-building-the-http-api/022-type-conversion-and-parsing` — Turning URL strings into Go values
+- [x] Lesson 30 / `phase-03-building-the-http-api/023-json-api-request-response-model` — API contracts and validation
+- [x] Lesson 31 / `phase-03-building-the-http-api/024-consistent-api-responses` — Consistent JSON responses
 
 ## Phase 4 — Middleware Mechanics
 
-- [x] Lesson 32 / `025-middleware` — Middleware mechanics
-- [x] Lesson 33 / `026-middleware-in-depth` — Response observation
+- [x] Lesson 32 / `phase-04-middleware-mechanics/025-middleware` — Middleware mechanics
+- [x] Lesson 33 / `phase-04-middleware-mechanics/026-middleware-in-depth` — Response observation
 
 ## Phase 5 — Finish the HTTP Boundary Properly
 

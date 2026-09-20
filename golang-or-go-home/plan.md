@@ -36,7 +36,7 @@ Every phase advances at least one of these; the tag under each phase heading sho
 
 ## How to read this
 
-- Lessons that have been written name the repository folder holding them and their code, and describe what was *actually taught* there — including language features introduced in the middle of backend work. Later lessons describe what they will cover.
+- Lessons that have been written name the repository folder holding them and their code — under the phase directory — and describe what was *actually taught* there, including language features introduced in the middle of backend work. Later lessons describe what they will cover.
 - Some folders hold several lessons. The lesson sequence, not the folder name, is the authoritative order.
 - Each phase continues from the state the service is actually in. A topic already taught is never rescheduled; where a later lesson revisits a subject, it names the deeper concern it is there to solve.
 - `progress.md` records what is done and what comes next.
@@ -83,50 +83,50 @@ These have appeared but are **not** learned, and each has a scheduled lesson:
 
 *Go Language* · Lessons 0–16
 
-### `000-install-go` — Lesson 0: Install Go
+### `phase-01-go-foundations/000-install-go` — Lesson 0: Install Go
 
 The toolchain, `go version`, platform install paths, and a first look at `go env`. `GOROOT`/`GOPATH` are shown and explicitly deferred to the modules lesson.
 
-### `001-understanding-a-go-project` — Lesson 1: Understanding a Go project
+### `phase-01-go-foundations/001-understanding-a-go-project` — Lesson 1: Understanding a Go project
 
 A folder is a module: no solution or project file. `go mod init`, what `go.mod` tracks, its rough equivalence to `.csproj`/`package.json`, and the habit of running `go run .` rather than `go run main.go`.
 
-### `002-structure-of-a-go-program` — Lesson 2: Structure of a Go program
+### `phase-01-go-foundations/002-structure-of-a-go-program` — Lesson 2: Structure of a Go program
 
 `package main` and what makes it executable, `import`, `func main` as the entry point, and Go's brace placement rule as a consequence of automatic semicolon insertion. Also covers `go build` versus `go run` and the `go.mod` contents.
 
-### `003-go-basic-types` — Lessons 3–5: Variables, basic types, constants
+### `phase-01-go-foundations/003-go-basic-types` — Lessons 3–5: Variables, basic types, constants
 
 **Lesson 3 — Variables:** `var` with an explicit type, `:=` short declaration, and why `:=` cannot redeclare an existing variable.
 **Lesson 4 — Basic types:** static typing, `string`, `int`, `float64`, `bool`, and `Println` inserting spaces between arguments. Why the type is named `float64` is deferred; `fmt.Print`/`Printf` are deferred.
 **Lesson 5 — Constants:** `const`, the requirement to initialize immediately, and when a constant is preferable to a variable.
 
-### `004-go-functions` — Lessons 6–7: Functions and multiple returns
+### `phase-01-go-foundations/004-go-functions` — Lessons 6–7: Functions and multiple returns
 
 **Lesson 6 — Functions:** `func`, the `name type` parameter order versus C#'s `type name`, return types, and grouping parameters of the same type.
 **Lesson 7 — Multiple return values:** returning `(string, int)`, destructuring at the call site, and the `(value, error)` convention previewed as Go's replacement for exception-based flow. `error` and `nil` are used here but explicitly deferred to Lesson 16.
 
-### `005-if-else-and-loops` — Lesson 8: If/else and loops
+### `phase-01-go-foundations/005-if-else-and-loops` — Lesson 8: If/else and loops
 
 `if`/`else` without parentheses but with mandatory braces; `for` as the only loop keyword, in its counted, condition-only (`while`), and infinite forms; `%` for the even/odd exercise. `switch` is deliberately absent — it arrives in Lesson 26.
 
-### `006-arrays-and-slices` — Lessons 9–10: Slices, then arrays
+### `phase-01-go-foundations/006-arrays-and-slices` — Lessons 9–10: Slices, then arrays
 
 **Lesson 9 — Slices:** slice literals, indexing, `append` and why its result must be reassigned, `len`, `range` with index and value, the blank identifier `_`, and Go's refusal to compile unused variables.
 **Lesson 10 — Arrays versus slices:** fixed-size `[3]int` versus `[]int`, when an array is the right choice, the slice header as pointer/length/capacity, what happens to the backing array on growth, and the empty-slice-then-append pattern used to build API responses.
 
-### `007-maps` — Lesson 11: Maps
+### `phase-01-go-foundations/007-maps` — Lesson 11: Maps
 
 Map literals, reading, add/update through plain assignment, `delete`, **zero values introduced here** (a missing key returns the value type's zero value), and the comma-`ok` form as the way to distinguish absence from a zero value.
 
-### `008-structs` — Lessons 12–15: Structs, methods, pointers, interfaces
+### `phase-01-go-foundations/008-structs` — Lessons 12–15: Structs, methods, pointers, interfaces
 
 **Lesson 12 — Structs:** `type ... struct`, literals with field names, field access and mutation, and capitalization as the visibility mechanism (noted, fully explained in Lesson 17).
 **Lesson 13 — Methods and receivers:** methods declared outside the type, the receiver, and a value receiver operating on a copy.
 **Lesson 14 — Pointers:** arguments passed by copy, `&` for address-of, `*T` as a pointer type, pointer receivers for mutation, and Go taking the address automatically on a method call.
 **Lesson 15 — Interfaces:** implicit satisfaction with no `implements` keyword, depending on behavior rather than a concrete type, and two types satisfying one interface.
 
-### `009-errors` — Lesson 16: Error handling
+### `phase-01-go-foundations/009-errors` — Lesson 16: Error handling
 
 The `(value, error)` return convention, `nil` as "no error" and the `if err != nil` shape, **`error` as an ordinary interface with `Error() string`** so errors are values, `errors.New` versus `fmt.Errorf` with formatted values, and the early-return error path. Wrapping, sentinel errors, and custom error types are explicitly deferred.
 
@@ -136,37 +136,37 @@ The `(value, error)` return convention, `nil` as "no error" and the `if err != n
 
 *Go Language · Backend / API Engineering* · Lessons 17–24
 
-### Lesson 17 / `010-packages-and-modules` — Packages and modules
+### Lesson 17 / `phase-02-organizing-go-code/010-packages-and-modules` — Packages and modules
 
 Several files in one package, a second package in a subdirectory, capitalization as the export rule instead of access modifiers, the module path as the root of import paths, and what `go mod init` establishes.
 
-### Lesson 18 / `011-pointers-structs-interfaces` — A small service boundary
+### Lesson 18 / `phase-02-organizing-go-code/011-pointers-structs-interfaces` — A small service boundary
 
 The first backend-shaped program: a struct model with behavior, an interface describing only what a consumer needs, an in-memory repository satisfying it implicitly, a service holding the interface as a dependency, explicit wiring in `main` instead of a DI container, a test fake as the motivation for the interface, and composition instead of inheritance. This is interface *use*, not a complete interface-design treatment.
 
-### Lesson 19 / `012-defer` — Cleanup with `defer`
+### Lesson 19 / `phase-02-organizing-go-code/012-defer` — Cleanup with `defer`
 
 Deferred execution at function exit, cleanup that survives early returns, LIFO ordering, and argument evaluation at `defer` time rather than call time.
 
-### Lesson 20 / `013-external-dependencies` — Dependencies
+### Lesson 20 / `phase-02-organizing-go-code/013-external-dependencies` — Dependencies
 
 `go get`, importing a third-party package, the roles of `go.mod` and `go.sum`, and `go mod tidy`.
 
-### Lesson 21 / `014-strings` — Strings in Go
+### Lesson 21 / `phase-02-organizing-go-code/014-strings` — Strings in Go
 
 Concatenation; a Go string as a sequence of bytes holding UTF-8-encoded text; `len` counting those bytes rather than human-readable characters; indexing yielding a single `byte`; **`fmt.Printf` and verbs introduced here** via `%c`; and the `strings` package.
 
 **Top-up owed here.** The lesson names `rune` without explaining it, which leaves a gap rather than a deferral. The bridge belongs in this lesson: a `rune` is a Unicode code point, a character outside ASCII occupies several bytes, so indexing or slicing by byte can split one apart, and `range` over a string decodes runes rather than walking bytes. That is enough to know when byte indexing is the wrong tool. Decoding, normalization, and the `unicode/utf8` API stay in Lesson 49.
 
-### Lesson 22 / `015-pointers-part-2` — Pointer syntax in practice
+### Lesson 22 / `phase-02-organizing-go-code/015-pointers-part-2` — Pointer syntax in practice
 
 `&`, `*` in a type versus `*` as dereference, mutation through a pointer, and automatic dereferencing for field and method access. Deepens Lesson 14 at the syntax level.
 
-### Lesson 23 / `016-struct-embedding-and-composition` — Composition
+### Lesson 23 / `phase-02-organizing-go-code/016-struct-embedding-and-composition` — Composition
 
 Struct embedding, field and method promotion, and why embedding expresses "has-a" composition rather than inheritance.
 
-### Lesson 24 / `017-struct-tags-and-json` — JSON at the model boundary
+### Lesson 24 / `phase-02-organizing-go-code/017-struct-tags-and-json` — JSON at the model boundary
 
 Struct tags as field metadata, `encoding/json`, `Marshal` producing `[]byte`, `Unmarshal` requiring a pointer so it can populate the target, and `omitempty`. JSON arrives here as a language/stdlib feature; Lesson 25 applies it as API transport.
 
@@ -176,31 +176,31 @@ Struct tags as field metadata, `encoding/json`, `Marshal` producing `[]byte`, `U
 
 *Backend / API Engineering · Go Language* · Lessons 25–31
 
-### Lesson 25 / `018-JSON-in-HTTP-APIs` — HTTP request and response bodies
+### Lesson 25 / `phase-03-building-the-http-api/018-JSON-in-HTTP-APIs` — HTTP request and response bodies
 
 The shape of an HTTP request (method, URL, headers, body), `net/http`, `ListenAndServe`, the handler signature, what `*http.Request` exposes, `http.ResponseWriter` as the response-construction mechanism, `fmt.Fprintln` writing to a destination rather than stdout, setting response headers with `w.Header().Set`, `r.Body` as a stream, `json.NewEncoder`/`NewDecoder` versus in-memory `Marshal`/`Unmarshal`, `http.Error`, and returning `400` for malformed JSON.
 
-### Lesson 26 / `019-http-routing-methods-and-status-codes` — Methods, routing, status codes
+### Lesson 26 / `phase-03-building-the-http-api/019-http-routing-methods-and-status-codes` — Methods, routing, status codes
 
 `r.Method` and the `http.MethodGet`-style constants; **`switch` is introduced here**, in the context of method dispatch, and contrasted with C#'s fallthrough rules; manual route registration with `HandleFunc`; the separation of "which handler" (routing) from "which operation" (method); `WriteHeader` and the fact that the status is committed once; `201 Created`; `405 Method Not Allowed`; and the implicit `200` when a handler writes a body without selecting a status.
 
-### Lesson 27 / `020-url-paths-query-parameters-and-path-parameters` — URL input
+### Lesson 27 / `phase-03-building-the-http-api/020-url-paths-query-parameters-and-path-parameters` — URL input
 
 URL anatomy, `r.URL.Path`, extracting a path segment manually with `strings.Split` and why that does not scale, `r.URL.Query()` and `.Get`, an absent parameter yielding the empty string, multiple filters, and the design distinction between a path parameter identifying a resource and a query parameter modifying retrieval. Automatic path extraction is deliberately withheld until the next lesson.
 
-### Lesson 28 / `021-http-router` — `ServeMux` route patterns
+### Lesson 28 / `phase-03-building-the-http-api/021-http-router` — `ServeMux` route patterns
 
 `http.NewServeMux` and passing an explicit router to the server, method-qualified patterns such as `GET /users`, `{id}` wildcards including several in one pattern, `r.PathValue`, why this beats hand-splitting paths, and how the router distinguishes `404 Not Found` from `405 Method Not Allowed`.
 
-### Lesson 29 / `022-type-conversion-and-parsing` — Turning URL strings into Go values
+### Lesson 29 / `phase-03-building-the-http-api/022-type-conversion-and-parsing` — Turning URL strings into Go values
 
 Type conversion between compatible Go types versus parsing text into a value; `strconv.Atoi`, `ParseBool`, `ParseFloat`, and when `ParseInt` is warranted; parsing failure as a `400`; the distinction between a malformed value and a well-formed but unacceptable one; and treating an absent query parameter differently from an invalid one by supplying a default.
 
-### Lesson 30 / `023-json-api-request-response-model` — API contracts and validation
+### Lesson 30 / `phase-03-building-the-http-api/023-json-api-request-response-model` — API contracts and validation
 
 Why request, response, and persistence representations are separate types when their contracts differ, and why not to multiply types when they do not; decoding answering "is this JSON understandable" while validation answers "is this data acceptable"; input validation versus business validation; `400 Bad Request` for both malformed and invalid input; and pointer fields as the way a PATCH request model distinguishes "field absent" from "field set to its zero value".
 
-### Lesson 31 / `024-consistent-api-responses` — Consistent JSON responses
+### Lesson 31 / `phase-03-building-the-http-api/024-consistent-api-responses` — Consistent JSON responses
 
 The headers → status → body ordering rule and why writing the body commits the response; choosing success statuses per operation; a JSON error shape and a `writeError` helper; a `writeJSON` helper — which is where **`any`, the alias for the empty interface, is introduced**; why `204 No Content` must not be routed through a body-writing helper; and keeping HTTP status semantics out of domain models.
 
@@ -210,11 +210,11 @@ The headers → status → body ordering rule and why writing the body commits t
 
 *Backend / API Engineering · Go Language* · Lessons 32–33
 
-### Lesson 32 / `025-middleware` — Middleware mechanics
+### Lesson 32 / `phase-04-middleware-mechanics/025-middleware` — Middleware mechanics
 
 `http.Handler` as an interface and `http.HandlerFunc` as the function adapter that satisfies it; the `func(next http.Handler) http.Handler` shape; delegating with `next.ServeHTTP` and what happens when you do not; before/after execution around a synchronous downstream call; **`time.Now`/`time.Since` and `log.Printf` are introduced here** for request timing; wrapping the whole router versus wrapping selected handlers; nesting, composition, and why ordering changes behavior; short-circuiting the chain; and the boundary between cross-cutting middleware and endpoint logic. Status capture is explicitly postponed.
 
-### Lesson 33 / `026-middleware-in-depth` — Response observation
+### Lesson 33 / `phase-04-middleware-mechanics/026-middleware-in-depth` — Response observation
 
 `http.ResponseWriter` as an interface with no way to read back the status; decorating it with a struct that **embeds the interface** so unoverridden methods still reach the underlying writer; intercepting `WriteHeader` to record the status and forwarding it so the client still receives it; overriding `Write` to model the implicit `200`; tracking `wroteHeader` so the first status wins; why the wrapper needs a pointer receiver, and that this is about mutation rather than about implementing the interface — with the method-set consequence that `*responseWriter`, not `responseWriter`, is the implementing type; status-and-duration request logging; and the production caveat that a naive wrapper hides `http.Flusher`, `http.Hijacker`, and `io.ReaderFrom`.
 

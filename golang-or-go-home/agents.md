@@ -7,7 +7,8 @@ example — `plan.md` states explicitly which topics have been seen without bein
 taught.
 
 Each lesson gets its own numbered folder containing a `README.md` and its code,
-continuing the existing naming scheme.
+continuing the existing naming scheme, nested under the phase directory it
+belongs to in `plan.md`.
 
 ## Course constraints
 
