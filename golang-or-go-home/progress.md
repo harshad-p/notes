@@ -20,66 +20,66 @@ A lesson counts as complete when its concepts are understood **and** its exercis
 
 - [x] Lesson 2 — Structure of a Go program
 
-`002-go-basic-types`
+`003-go-basic-types`
 
 - [x] Lesson 3 — Variables
 - [x] Lesson 4 — Basic types
 - [x] Lesson 5 — Constants
 
-`003-go-functions`
+`004-go-functions`
 
 - [x] Lesson 6 — Functions
 - [x] Lesson 7 — Multiple return values
 
-`004-if-else-and-loops`
+`005-if-else-and-loops`
 
 - [x] Lesson 8 — If/else and loops
 
-`005-arrays-and-slices`
+`006-arrays-and-slices`
 
 - [x] Lesson 9 — Slices
 - [x] Lesson 10 — Arrays versus slices
 
-`006-maps`
+`007-maps`
 
 - [x] Lesson 11 — Maps
 
-`007-structs`
+`008-structs`
 
 - [x] Lesson 12 — Structs
 - [x] Lesson 13 — Methods and receivers
 - [x] Lesson 14 — Pointers
 - [x] Lesson 15 — Interfaces
 
-`008-errors`
+`009-errors`
 
 - [x] Lesson 16 — Error handling
 
 ## Phase 2 — Organizing Go Code and Connecting Language Features
 
-- [x] Lesson 17 / `009-packages-and-modules` — Packages and modules
-- [x] Lesson 18 / `010-pointers-structs-interfaces` — A small service boundary
-- [x] Lesson 19 / `011-defer` — Cleanup with `defer`
-- [x] Lesson 20 / `012-external-dependencies` — Dependencies
-- [x] Lesson 21 / `013-strings` — Strings in Go
-- [x] Lesson 22 / `014-pointers-part-2` — Pointer syntax in practice
-- [x] Lesson 23 / `015-struct-embedding-and-composition` — Composition
-- [x] Lesson 24 / `016-struct-tags-and-json` — JSON at the model boundary
+- [x] Lesson 17 / `010-packages-and-modules` — Packages and modules
+- [x] Lesson 18 / `011-pointers-structs-interfaces` — A small service boundary
+- [x] Lesson 19 / `012-defer` — Cleanup with `defer`
+- [x] Lesson 20 / `013-external-dependencies` — Dependencies
+- [x] Lesson 21 / `014-strings` — Strings in Go
+- [x] Lesson 22 / `015-pointers-part-2` — Pointer syntax in practice
+- [x] Lesson 23 / `016-struct-embedding-and-composition` — Composition
+- [x] Lesson 24 / `017-struct-tags-and-json` — JSON at the model boundary
 
 ## Phase 3 — Building the HTTP API
 
-- [x] Lesson 25 / `017-JSON-in-HTTP-APIs` — HTTP request and response bodies
-- [x] Lesson 26 / `018-http-routing-methods-and-status-codes` — Methods, routing, status codes
-- [x] Lesson 27 / `019-url-paths-query-parameters-and-path-parameters` — URL input
-- [x] Lesson 28 / `020-http-router` — `ServeMux` route patterns
-- [x] Lesson 29 / `021-type-conversion-and-parsing` — Turning URL strings into Go values
-- [x] Lesson 30 / `022-json-api-request-response-model` — API contracts and validation
-- [x] Lesson 31 / `023-consistent-api-responses` — Consistent JSON responses
+- [x] Lesson 25 / `018-JSON-in-HTTP-APIs` — HTTP request and response bodies
+- [x] Lesson 26 / `019-http-routing-methods-and-status-codes` — Methods, routing, status codes
+- [x] Lesson 27 / `020-url-paths-query-parameters-and-path-parameters` — URL input
+- [x] Lesson 28 / `021-http-router` — `ServeMux` route patterns
+- [x] Lesson 29 / `022-type-conversion-and-parsing` — Turning URL strings into Go values
+- [x] Lesson 30 / `023-json-api-request-response-model` — API contracts and validation
+- [x] Lesson 31 / `024-consistent-api-responses` — Consistent JSON responses
 
 ## Phase 4 — Middleware Mechanics
 
-- [x] Lesson 32 / `024-middleware` — Middleware mechanics
-- [x] Lesson 33 / `025-middleware-in-depth` — Response observation
+- [x] Lesson 32 / `025-middleware` — Middleware mechanics
+- [x] Lesson 33 / `026-middleware-in-depth` — Response observation
 
 ## Phase 5 — Finish the HTTP Boundary Properly
 
