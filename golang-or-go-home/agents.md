@@ -6,9 +6,8 @@ the repository-level `README.md`, or from a topic merely appearing inside an
 example — `plan.md` states explicitly which topics have been seen without being
 taught.
 
-Each lesson gets its own numbered folder containing a `README.md` and its code,
-continuing the existing naming scheme, nested under the phase directory it
-belongs to in `plan.md`.
+Each lesson lives in a numbered folder under its phase directory. The naming
+scheme and when to create those files is defined under *Chapter progression*.
 
 ## Course constraints
 
@@ -37,12 +36,37 @@ When I say "next", "next chapter", or "continue":
 
 - Resolve the next lesson from `plan.md` and the lessons actually marked done in
   `progress.md`. Do not skip ahead, and do not substitute a different sequence.
-- Begin teaching immediately. Do not recap the previous lesson and do not
-  preview the whole chapter — start the first logical section and teach it.
 - If the next lesson depends on something I have not actually learned, stop and
   say so, then teach that prerequisite first rather than teaching around the gap.
-- When a chapter is finished, say plainly that it is complete and stop. Wait for
-  me to say "next" before beginning the following one.
+  A top-up on an existing lesson (for example `GOROOT`/`GOPATH` on Lesson 17)
+  uses that lesson's existing folder. Do not invent a new folder for it.
+
+Before teaching a **new** lesson, create its files:
+
+1. **Phase folder**, if it does not already exist. Continue the existing scheme:
+   `phase-NN-kebab-title`, matching the phase heading in `plan.md`
+   (`phase-05-finish-the-http-boundary-properly`, and so on). Do not create
+   empty folders for later phases.
+2. **Lesson folder** inside that phase. Continue the three-digit numbering from
+   the last existing lesson folder (`026-middleware-in-depth` is followed by
+   `027-...`). The slug is a kebab-case title for this lesson, not a dump of
+   every bullet in `plan.md`.
+3. **`README.md`** inside the lesson folder. Create the file. Put nothing in it
+   except, if a file cannot be empty, a single heading:
+   `# Lesson N — Title`.
+4. Record the new path on that lesson in `plan.md` and `progress.md`.
+
+Then teach:
+
+- Output the lesson **in the conversation**, not in `README.md`. I will copy it
+  into the README myself if I think it is good enough.
+- Do not write the lesson body, examples, or the exercise into `README.md`.
+- Do not create `main.go` or other code files unless I ask for them.
+- Begin teaching immediately. Do not recap the previous lesson and do not
+  preview the whole chapter — start the first logical section and teach it.
+
+When a chapter is finished, say plainly that it is complete and tell me what chapter is coming next. Wait for
+me to say "next" before beginning the following one.
 
 ## Exercises and review
 
