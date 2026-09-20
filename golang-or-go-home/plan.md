@@ -36,9 +36,9 @@ Every phase advances at least one of these; the tag under each phase heading sho
 
 ## How to read this
 
-- Lessons that have been written name the repository folder holding them and their code — under the phase directory — and describe what was *actually taught* there, including language features introduced in the middle of backend work. Later lessons describe what they will cover.
-- Some folders hold several lessons. The lesson sequence, not the folder name, is the authoritative order.
-- Each phase continues from the state the service is actually in. A topic already taught is never rescheduled; where a later lesson revisits a subject, it names the deeper concern it is there to solve.
+- Each lesson lists the topics it teaches. That list is the source of truth for what the lesson covers.
+- Lessons that have been written also name the repository folder holding them and their code — under the phase directory. The lesson sequence, not the folder name, is the authoritative order. Some folders hold several lessons.
+- A topic already taught is never rescheduled; where a later lesson revisits a subject, it names the deeper concern it is there to solve.
 - `progress.md` records what is done and what comes next.
 
 ### What "covered" means here
@@ -74,7 +74,7 @@ These have appeared but are **not** learned, and each has a scheduled lesson:
 - **Depth without narration.** Lessons explain mechanisms, edge cases, and design consequences for an experienced developer. They do not walk through obvious code line by line.
 - **One exercise per lesson**, realistic, with no solution or step-by-step hints in the statement.
 - **Lesson shape.** What it is → why it exists → the Go mechanics → applied to our service → how it is used in production → alternatives and trade-offs → the mistakes that actually cause incidents → exercise.
-- **Interview checkpoints.** Each phase ends with the learner answering that phase's interview questions before any answer is given. The per-lesson *Interview focus* notes below are the source of those questions.
+- **Interview checkpoints.** Each phase ends with the learner answering that phase's interview questions before any answer is given. The per-lesson *Interview* bullets below are the source of those questions.
 - **Completion gates.** A lesson is marked done in `progress.md` when the concept is understood at a level usable at work — not when it has been read.
 
 ---
@@ -83,52 +83,172 @@ These have appeared but are **not** learned, and each has a scheduled lesson:
 
 *Go Language* · Lessons 0–16
 
-### `phase-01-go-foundations/000-install-go` — Lesson 0: Install Go
+## Lesson 0 — Install Go
 
-The toolchain, `go version`, platform install paths, and a first look at `go env`. `GOROOT`/`GOPATH` are shown and explicitly deferred to the modules lesson.
+`phase-01-go-foundations/000-install-go`
 
-### `phase-01-go-foundations/001-understanding-a-go-project` — Lesson 1: Understanding a Go project
+- The Go toolchain
+- `go version`
+- Platform install paths
+- `go env`
+- `GOROOT` / `GOPATH` shown, taught properly in Lesson 17
 
-A folder is a module: no solution or project file. `go mod init`, what `go.mod` tracks, its rough equivalence to `.csproj`/`package.json`, and the habit of running `go run .` rather than `go run main.go`.
+## Lesson 1 — Understanding a Go project
 
-### `phase-01-go-foundations/002-structure-of-a-go-program` — Lesson 2: Structure of a Go program
+`phase-01-go-foundations/001-understanding-a-go-project`
 
-`package main` and what makes it executable, `import`, `func main` as the entry point, and Go's brace placement rule as a consequence of automatic semicolon insertion. Also covers `go build` versus `go run` and the `go.mod` contents.
+- A folder is a module: no solution or project file
+- `go mod init`
+- What `go.mod` tracks
+- Rough equivalence to `.csproj` / `package.json`
+- `go run .` rather than `go run main.go`
 
-### `phase-01-go-foundations/003-go-basic-types` — Lessons 3–5: Variables, basic types, constants
+## Lesson 2 — Structure of a Go program
 
-**Lesson 3 — Variables:** `var` with an explicit type, `:=` short declaration, and why `:=` cannot redeclare an existing variable.
-**Lesson 4 — Basic types:** static typing, `string`, `int`, `float64`, `bool`, and `Println` inserting spaces between arguments. Why the type is named `float64` is deferred; `fmt.Print`/`Printf` are deferred.
-**Lesson 5 — Constants:** `const`, the requirement to initialize immediately, and when a constant is preferable to a variable.
+`phase-01-go-foundations/002-structure-of-a-go-program`
 
-### `phase-01-go-foundations/004-go-functions` — Lessons 6–7: Functions and multiple returns
+- `package main` and what makes a program executable
+- `import`
+- `func main` as the entry point
+- Brace placement as a consequence of automatic semicolon insertion
+- `go build` versus `go run`
+- `go.mod` contents
 
-**Lesson 6 — Functions:** `func`, the `name type` parameter order versus C#'s `type name`, return types, and grouping parameters of the same type.
-**Lesson 7 — Multiple return values:** returning `(string, int)`, destructuring at the call site, and the `(value, error)` convention previewed as Go's replacement for exception-based flow. `error` and `nil` are used here but explicitly deferred to Lesson 16.
+## Lesson 3 — Variables
 
-### `phase-01-go-foundations/005-if-else-and-loops` — Lesson 8: If/else and loops
+`phase-01-go-foundations/003-go-basic-types`
 
-`if`/`else` without parentheses but with mandatory braces; `for` as the only loop keyword, in its counted, condition-only (`while`), and infinite forms; `%` for the even/odd exercise. `switch` is deliberately absent — it arrives in Lesson 26.
+- `var` with an explicit type
+- `:=` short declaration
+- Why `:=` cannot redeclare an existing variable
 
-### `phase-01-go-foundations/006-arrays-and-slices` — Lessons 9–10: Slices, then arrays
+## Lesson 4 — Basic types
 
-**Lesson 9 — Slices:** slice literals, indexing, `append` and why its result must be reassigned, `len`, `range` with index and value, the blank identifier `_`, and Go's refusal to compile unused variables.
-**Lesson 10 — Arrays versus slices:** fixed-size `[3]int` versus `[]int`, when an array is the right choice, the slice header as pointer/length/capacity, what happens to the backing array on growth, and the empty-slice-then-append pattern used to build API responses.
+`phase-01-go-foundations/003-go-basic-types`
 
-### `phase-01-go-foundations/007-maps` — Lesson 11: Maps
+- Static typing
+- `string`, `int`, `float64`, `bool`
+- `Println` inserting spaces between arguments
+- *Deferred:* why `float64` includes its width → Lesson 46
+- *Deferred:* `fmt.Print` / `Printf` → Lesson 21
 
-Map literals, reading, add/update through plain assignment, `delete`, **zero values introduced here** (a missing key returns the value type's zero value), and the comma-`ok` form as the way to distinguish absence from a zero value.
+## Lesson 5 — Constants
 
-### `phase-01-go-foundations/008-structs` — Lessons 12–15: Structs, methods, pointers, interfaces
+`phase-01-go-foundations/003-go-basic-types`
 
-**Lesson 12 — Structs:** `type ... struct`, literals with field names, field access and mutation, and capitalization as the visibility mechanism (noted, fully explained in Lesson 17).
-**Lesson 13 — Methods and receivers:** methods declared outside the type, the receiver, and a value receiver operating on a copy.
-**Lesson 14 — Pointers:** arguments passed by copy, `&` for address-of, `*T` as a pointer type, pointer receivers for mutation, and Go taking the address automatically on a method call.
-**Lesson 15 — Interfaces:** implicit satisfaction with no `implements` keyword, depending on behavior rather than a concrete type, and two types satisfying one interface.
+- `const`
+- Must initialize immediately
+- When a constant is preferable to a variable
 
-### `phase-01-go-foundations/009-errors` — Lesson 16: Error handling
+## Lesson 6 — Functions
 
-The `(value, error)` return convention, `nil` as "no error" and the `if err != nil` shape, **`error` as an ordinary interface with `Error() string`** so errors are values, `errors.New` versus `fmt.Errorf` with formatted values, and the early-return error path. Wrapping, sentinel errors, and custom error types are explicitly deferred.
+`phase-01-go-foundations/004-go-functions`
+
+- `func`
+- `name type` parameter order versus C#'s `type name`
+- Return types
+- Grouping parameters of the same type
+
+## Lesson 7 — Multiple return values
+
+`phase-01-go-foundations/004-go-functions`
+
+- Returning `(string, int)`
+- Destructuring at the call site
+- `(value, error)` previewed as Go's replacement for exceptions
+- `error` and `nil` used here, taught in Lesson 16
+
+## Lesson 8 — If/else and loops
+
+`phase-01-go-foundations/005-if-else-and-loops`
+
+- `if` / `else` without parentheses, mandatory braces
+- `for` as the only loop keyword
+- Counted `for`
+- Condition-only `for` (`while` form)
+- Infinite `for`
+- `%`
+- *Deferred:* `switch` → Lesson 26
+
+## Lesson 9 — Slices
+
+`phase-01-go-foundations/006-arrays-and-slices`
+
+- Slice literals
+- Indexing
+- `append` and why its result must be reassigned
+- `len`
+- `range` with index and value
+- The blank identifier `_`
+- Unused variables do not compile
+
+## Lesson 10 — Arrays versus slices
+
+`phase-01-go-foundations/006-arrays-and-slices`
+
+- Fixed-size `[3]int` versus `[]int`
+- When an array is the right choice
+- Slice header: pointer, length, capacity
+- What happens to the backing array on growth
+- Empty-slice-then-append for building API responses
+
+## Lesson 11 — Maps
+
+`phase-01-go-foundations/007-maps`
+
+- Map literals
+- Reading, add, and update by assignment
+- `delete`
+- Zero values: a missing key returns the value type's zero value
+- Comma-`ok` to distinguish absence from a zero value
+
+## Lesson 12 — Structs
+
+`phase-01-go-foundations/008-structs`
+
+- `type ... struct`
+- Literals with field names
+- Field access and mutation
+- Capitalization as visibility, taught fully in Lesson 17
+
+## Lesson 13 — Methods and receivers
+
+`phase-01-go-foundations/008-structs`
+
+- Methods declared outside the type
+- The receiver
+- A value receiver operates on a copy
+
+## Lesson 14 — Pointers
+
+`phase-01-go-foundations/008-structs`
+
+- Arguments passed by copy
+- `&` for address-of
+- `*T` as a pointer type
+- Pointer receivers for mutation
+- Go taking the address automatically on a method call
+
+## Lesson 15 — Interfaces
+
+`phase-01-go-foundations/008-structs`
+
+- Implicit satisfaction: no `implements` keyword
+- Depending on behavior rather than a concrete type
+- Two types satisfying one interface
+
+## Lesson 16 — Error handling
+
+`phase-01-go-foundations/009-errors`
+
+- `(value, error)` return convention
+- `nil` as "no error"
+- `if err != nil`
+- `error` as an ordinary interface with `Error() string`
+- Errors are values
+- `errors.New` versus `fmt.Errorf`
+- Early-return error path
+- *Deferred:* wrapping, sentinel errors, custom error types → Lesson 40
 
 ---
 
@@ -136,39 +256,91 @@ The `(value, error)` return convention, `nil` as "no error" and the `if err != n
 
 *Go Language · Backend / API Engineering* · Lessons 17–24
 
-### Lesson 17 / `phase-02-organizing-go-code/010-packages-and-modules` — Packages and modules
+## Lesson 17 — Packages and modules
 
-Several files in one package, a second package in a subdirectory, capitalization as the export rule instead of access modifiers, the module path as the root of import paths, and what `go mod init` establishes.
+`phase-02-organizing-go-code/010-packages-and-modules`
 
-### Lesson 18 / `phase-02-organizing-go-code/011-pointers-structs-interfaces` — A small service boundary
+- Several files in one package
+- A second package in a subdirectory
+- Capitalization as the export rule
+- The module path as the root of import paths
+- What `go mod init` establishes
+- `GOROOT` / `GOPATH` covered enough here
 
-The first backend-shaped program: a struct model with behavior, an interface describing only what a consumer needs, an in-memory repository satisfying it implicitly, a service holding the interface as a dependency, explicit wiring in `main` instead of a DI container, a test fake as the motivation for the interface, and composition instead of inheritance. This is interface *use*, not a complete interface-design treatment.
+## Lesson 18 — A small service boundary
 
-### Lesson 19 / `phase-02-organizing-go-code/012-defer` — Cleanup with `defer`
+`phase-02-organizing-go-code/011-pointers-structs-interfaces`
 
-Deferred execution at function exit, cleanup that survives early returns, LIFO ordering, and argument evaluation at `defer` time rather than call time.
+- A struct model with behavior
+- An interface describing only what a consumer needs
+- An in-memory repository satisfying it implicitly
+- A service holding the interface as a dependency
+- Explicit wiring in `main` instead of a DI container
+- A test fake as the motivation for the interface
+- Composition instead of inheritance
+- Interface *use*, not interface design in depth
 
-### Lesson 20 / `phase-02-organizing-go-code/013-external-dependencies` — Dependencies
+## Lesson 19 — Cleanup with `defer`
 
-`go get`, importing a third-party package, the roles of `go.mod` and `go.sum`, and `go mod tidy`.
+`phase-02-organizing-go-code/012-defer`
 
-### Lesson 21 / `phase-02-organizing-go-code/014-strings` — Strings in Go
+- Deferred execution at function exit
+- Cleanup that survives early returns
+- LIFO ordering
+- Arguments evaluated at `defer` time, not call time
 
-Concatenation; a Go string as a sequence of bytes holding UTF-8-encoded text; `len` counting those bytes rather than human-readable characters; indexing yielding a single `byte`; **`fmt.Printf` and verbs introduced here** via `%c`; and the `strings` package.
+## Lesson 20 — Dependencies
 
-**Top-up owed here.** The lesson names `rune` without explaining it, which leaves a gap rather than a deferral. The bridge belongs in this lesson: a `rune` is a Unicode code point, a character outside ASCII occupies several bytes, so indexing or slicing by byte can split one apart, and `range` over a string decodes runes rather than walking bytes. That is enough to know when byte indexing is the wrong tool. Decoding, normalization, and the `unicode/utf8` API stay in Lesson 49.
+`phase-02-organizing-go-code/013-external-dependencies`
 
-### Lesson 22 / `phase-02-organizing-go-code/015-pointers-part-2` — Pointer syntax in practice
+- `go get`
+- Importing a third-party package
+- Roles of `go.mod` and `go.sum`
+- `go mod tidy`
 
-`&`, `*` in a type versus `*` as dereference, mutation through a pointer, and automatic dereferencing for field and method access. Deepens Lesson 14 at the syntax level.
+## Lesson 21 — Strings in Go
 
-### Lesson 23 / `phase-02-organizing-go-code/016-struct-embedding-and-composition` — Composition
+`phase-02-organizing-go-code/014-strings`
 
-Struct embedding, field and method promotion, and why embedding expresses "has-a" composition rather than inheritance.
+- Concatenation
+- A Go string is a sequence of bytes holding UTF-8-encoded text
+- `len` counts bytes, not human-readable characters
+- Indexing yields a `byte`
+- `fmt.Printf` and verbs, introduced via `%c`
+- The `strings` package
+- `rune` as a Unicode code point — enough to know why it exists
+- A character outside ASCII occupies several bytes, so byte indexing can split one
+- `range` over a string decodes runes rather than walking bytes
+- *Deferred:* decoding, normalization, `unicode/utf8` → Lesson 49
 
-### Lesson 24 / `phase-02-organizing-go-code/017-struct-tags-and-json` — JSON at the model boundary
+## Lesson 22 — Pointer syntax in practice
 
-Struct tags as field metadata, `encoding/json`, `Marshal` producing `[]byte`, `Unmarshal` requiring a pointer so it can populate the target, and `omitempty`. JSON arrives here as a language/stdlib feature; Lesson 25 applies it as API transport.
+`phase-02-organizing-go-code/015-pointers-part-2`
+
+- `&`
+- `*` in a type versus `*` as dereference
+- Mutation through a pointer
+- Automatic dereferencing for field and method access
+- Deepens Lesson 14 at the syntax level
+
+## Lesson 23 — Composition
+
+`phase-02-organizing-go-code/016-struct-embedding-and-composition`
+
+- Struct embedding
+- Field and method promotion
+- Embedding expresses "has-a" composition, not inheritance
+
+## Lesson 24 — JSON at the model boundary
+
+`phase-02-organizing-go-code/017-struct-tags-and-json`
+
+- Struct tags as field metadata
+- `encoding/json`
+- `Marshal` producing `[]byte`
+- `Unmarshal` requiring a pointer
+- `omitempty`
+- JSON as a language/stdlib feature; HTTP transport is Lesson 25
 
 ---
 
@@ -176,33 +348,98 @@ Struct tags as field metadata, `encoding/json`, `Marshal` producing `[]byte`, `U
 
 *Backend / API Engineering · Go Language* · Lessons 25–31
 
-### Lesson 25 / `phase-03-building-the-http-api/018-JSON-in-HTTP-APIs` — HTTP request and response bodies
+## Lesson 25 — HTTP request and response bodies
 
-The shape of an HTTP request (method, URL, headers, body), `net/http`, `ListenAndServe`, the handler signature, what `*http.Request` exposes, `http.ResponseWriter` as the response-construction mechanism, `fmt.Fprintln` writing to a destination rather than stdout, setting response headers with `w.Header().Set`, `r.Body` as a stream, `json.NewEncoder`/`NewDecoder` versus in-memory `Marshal`/`Unmarshal`, `http.Error`, and returning `400` for malformed JSON.
+`phase-03-building-the-http-api/018-JSON-in-HTTP-APIs`
 
-### Lesson 26 / `phase-03-building-the-http-api/019-http-routing-methods-and-status-codes` — Methods, routing, status codes
+- Shape of an HTTP request: method, URL, headers, body
+- `net/http`
+- `ListenAndServe`
+- The handler signature
+- What `*http.Request` exposes
+- `http.ResponseWriter` as the response-construction mechanism
+- `fmt.Fprintln` writing to a destination rather than stdout
+- `w.Header().Set`
+- `r.Body` as a stream
+- `json.NewEncoder` / `NewDecoder` versus in-memory `Marshal` / `Unmarshal`
+- `http.Error`
+- Returning `400` for malformed JSON
 
-`r.Method` and the `http.MethodGet`-style constants; **`switch` is introduced here**, in the context of method dispatch, and contrasted with C#'s fallthrough rules; manual route registration with `HandleFunc`; the separation of "which handler" (routing) from "which operation" (method); `WriteHeader` and the fact that the status is committed once; `201 Created`; `405 Method Not Allowed`; and the implicit `200` when a handler writes a body without selecting a status.
+## Lesson 26 — Methods, routing, status codes
 
-### Lesson 27 / `phase-03-building-the-http-api/020-url-paths-query-parameters-and-path-parameters` — URL input
+`phase-03-building-the-http-api/019-http-routing-methods-and-status-codes`
 
-URL anatomy, `r.URL.Path`, extracting a path segment manually with `strings.Split` and why that does not scale, `r.URL.Query()` and `.Get`, an absent parameter yielding the empty string, multiple filters, and the design distinction between a path parameter identifying a resource and a query parameter modifying retrieval. Automatic path extraction is deliberately withheld until the next lesson.
+- `r.Method` and `http.MethodGet`-style constants
+- `switch`, introduced here for method dispatch
+- Contrast with C# fallthrough rules
+- Manual route registration with `HandleFunc`
+- Routing ("which handler") versus method ("which operation")
+- `WriteHeader` and the fact that the status is committed once
+- `201 Created`
+- `405 Method Not Allowed`
+- Implicit `200` when a handler writes a body without selecting a status
 
-### Lesson 28 / `phase-03-building-the-http-api/021-http-router` — `ServeMux` route patterns
+## Lesson 27 — URL input
 
-`http.NewServeMux` and passing an explicit router to the server, method-qualified patterns such as `GET /users`, `{id}` wildcards including several in one pattern, `r.PathValue`, why this beats hand-splitting paths, and how the router distinguishes `404 Not Found` from `405 Method Not Allowed`.
+`phase-03-building-the-http-api/020-url-paths-query-parameters-and-path-parameters`
 
-### Lesson 29 / `phase-03-building-the-http-api/022-type-conversion-and-parsing` — Turning URL strings into Go values
+- URL anatomy
+- `r.URL.Path`
+- Extracting a path segment with `strings.Split`, and why that does not scale
+- `r.URL.Query()` and `.Get`
+- An absent parameter yields the empty string
+- Multiple filters
+- Path parameter identifies a resource; query parameter modifies retrieval
+- *Deferred:* automatic path extraction → Lesson 28
 
-Type conversion between compatible Go types versus parsing text into a value; `strconv.Atoi`, `ParseBool`, `ParseFloat`, and when `ParseInt` is warranted; parsing failure as a `400`; the distinction between a malformed value and a well-formed but unacceptable one; and treating an absent query parameter differently from an invalid one by supplying a default.
+## Lesson 28 — `ServeMux` route patterns
 
-### Lesson 30 / `phase-03-building-the-http-api/023-json-api-request-response-model` — API contracts and validation
+`phase-03-building-the-http-api/021-http-router`
 
-Why request, response, and persistence representations are separate types when their contracts differ, and why not to multiply types when they do not; decoding answering "is this JSON understandable" while validation answers "is this data acceptable"; input validation versus business validation; `400 Bad Request` for both malformed and invalid input; and pointer fields as the way a PATCH request model distinguishes "field absent" from "field set to its zero value".
+- `http.NewServeMux`
+- Passing an explicit router to the server
+- Method-qualified patterns such as `GET /users`
+- `{id}` wildcards, including several in one pattern
+- `r.PathValue`
+- Why this beats hand-splitting paths
+- How the router distinguishes `404 Not Found` from `405 Method Not Allowed`
 
-### Lesson 31 / `phase-03-building-the-http-api/024-consistent-api-responses` — Consistent JSON responses
+## Lesson 29 — Turning URL strings into Go values
 
-The headers → status → body ordering rule and why writing the body commits the response; choosing success statuses per operation; a JSON error shape and a `writeError` helper; a `writeJSON` helper — which is where **`any`, the alias for the empty interface, is introduced**; why `204 No Content` must not be routed through a body-writing helper; and keeping HTTP status semantics out of domain models.
+`phase-03-building-the-http-api/022-type-conversion-and-parsing`
+
+- Type conversion between compatible Go types versus parsing text into a value
+- `strconv.Atoi`
+- `ParseBool`
+- `ParseFloat`
+- When `ParseInt` is warranted
+- Parsing failure as a `400`
+- Malformed value versus well-formed but unacceptable
+- Absent query parameter versus invalid: supplying a default
+
+## Lesson 30 — API contracts and validation
+
+`phase-03-building-the-http-api/023-json-api-request-response-model`
+
+- Separate request, response, and persistence types when their contracts differ
+- Not multiplying types when they do not
+- Decoding: "is this JSON understandable"
+- Validation: "is this data acceptable"
+- Input validation versus business validation
+- `400 Bad Request` for both malformed and invalid input
+- Pointer fields so PATCH can distinguish "field absent" from "field set to zero"
+
+## Lesson 31 — Consistent JSON responses
+
+`phase-03-building-the-http-api/024-consistent-api-responses`
+
+- Headers → status → body, and why writing the body commits the response
+- Choosing success statuses per operation
+- A JSON error shape and a `writeError` helper
+- A `writeJSON` helper
+- `any`, the alias for the empty interface, introduced here
+- Why `204 No Content` must not go through a body-writing helper
+- Keeping HTTP status semantics out of domain models
 
 ---
 
@@ -210,13 +447,38 @@ The headers → status → body ordering rule and why writing the body commits t
 
 *Backend / API Engineering · Go Language* · Lessons 32–33
 
-### Lesson 32 / `phase-04-middleware-mechanics/025-middleware` — Middleware mechanics
+## Lesson 32 — Middleware mechanics
 
-`http.Handler` as an interface and `http.HandlerFunc` as the function adapter that satisfies it; the `func(next http.Handler) http.Handler` shape; delegating with `next.ServeHTTP` and what happens when you do not; before/after execution around a synchronous downstream call; **`time.Now`/`time.Since` and `log.Printf` are introduced here** for request timing; wrapping the whole router versus wrapping selected handlers; nesting, composition, and why ordering changes behavior; short-circuiting the chain; and the boundary between cross-cutting middleware and endpoint logic. Status capture is explicitly postponed.
+`phase-04-middleware-mechanics/025-middleware`
 
-### Lesson 33 / `phase-04-middleware-mechanics/026-middleware-in-depth` — Response observation
+- `http.Handler` as an interface
+- `http.HandlerFunc` as the function adapter that satisfies it
+- The `func(next http.Handler) http.Handler` shape
+- Delegating with `next.ServeHTTP`, and what happens when you do not
+- Before/after execution around a synchronous downstream call
+- `time.Now` / `time.Since` for request timing
+- `log.Printf`
+- Wrapping the whole router versus wrapping selected handlers
+- Nesting, composition, and why ordering changes behavior
+- Short-circuiting the chain
+- Boundary between cross-cutting middleware and endpoint logic
+- *Deferred:* status capture → Lesson 33
 
-`http.ResponseWriter` as an interface with no way to read back the status; decorating it with a struct that **embeds the interface** so unoverridden methods still reach the underlying writer; intercepting `WriteHeader` to record the status and forwarding it so the client still receives it; overriding `Write` to model the implicit `200`; tracking `wroteHeader` so the first status wins; why the wrapper needs a pointer receiver, and that this is about mutation rather than about implementing the interface — with the method-set consequence that `*responseWriter`, not `responseWriter`, is the implementing type; status-and-duration request logging; and the production caveat that a naive wrapper hides `http.Flusher`, `http.Hijacker`, and `io.ReaderFrom`.
+## Lesson 33 — Response observation
+
+`phase-04-middleware-mechanics/026-middleware-in-depth`
+
+- `http.ResponseWriter` as an interface with no way to read back the status
+- Decorating it with a struct that embeds the interface
+- Unoverridden methods still reaching the underlying writer
+- Intercepting `WriteHeader` to record the status and forwarding it
+- Overriding `Write` to model the implicit `200`
+- `wroteHeader` so the first status wins
+- Why the wrapper needs a pointer receiver (mutation, not "to implement the interface")
+- Method-set consequence: `*responseWriter`, not `responseWriter`, is the implementing type
+- Status-and-duration request logging
+- Naive wrappers hide `http.Flusher`, `http.Hijacker`, and `io.ReaderFrom`
+- *Deferred:* preserving those optional interfaces → Lesson 35
 
 ---
 
@@ -224,11 +486,11 @@ The headers → status → body ordering rule and why writing the body commits t
 
 *Backend / API Engineering · Production / Engineering* · Lessons 34–37
 
-The chain built in Lessons 32–33 is still hand-nested, has no recovery, cannot pass anything to a handler, and has nothing verifying that it behaves. This phase takes middleware from working to professional, introduces the request lifecycle the finished chain needs, and makes the existing API testable before it grows.
+The chain from Lessons 32–33 is still hand-nested, has no recovery, cannot pass anything to a handler, and has nothing verifying that it behaves.
 
-#### The middleware track
+### The middleware track
 
-Middleware is not finished when `func(next http.Handler) http.Handler` works. It is a thread running through the rest of the course, and each concern lands where its prerequisites exist:
+Middleware is a thread through the rest of the course. Each concern lands where its prerequisites exist:
 
 | Concern | Lesson |
 | --- | --- |
@@ -241,27 +503,72 @@ Middleware is not finished when `func(next http.Handler) http.Handler` works. It
 | Authentication and authorization middleware, and what must not live in it | 43–44 |
 | Metrics and tracing middleware, correlation across components | 56 |
 
-### Lesson 34 — Middleware composition and ordering
+## Lesson 34 — Middleware composition and ordering
 
-A chain helper replacing nested calls, the reverse-wrapping order that makes a chain read top-to-bottom, building the chain once at startup rather than per request, and a deliberate order for the pieces the API is missing: panic recovery that must cope with a response already committed, and request-scoped structured logging with `log/slog` replacing `log.Printf`. A request ID can be generated and logged here, but not yet handed to the handler — that gap is what Lesson 36 solves. Also what a request log must not contain: credentials, tokens, personal data, and whole request or response bodies. *Interview focus: why ordering changes behavior, and what recovery can still do after the status has been written.*
+- A chain helper replacing nested calls
+- Reverse-wrapping order so a chain reads top-to-bottom
+- Building the chain once at startup, not per request
+- Panic recovery that must cope with a response already committed
+- Request-scoped structured logging with `log/slog` replacing `log.Printf`
+- Generating a request ID and logging it, without yet handing it to the handler
+- What a request log must not contain: credentials, tokens, personal data, whole bodies
+- **Interview:** why ordering changes behavior; what recovery can still do after the status has been written
+- *Deferred:* handing the request ID to downstream code → Lesson 36
 
-### Lesson 35 — Middleware at the edge of production
+## Lesson 35 — Middleware at the edge of production
 
-The cross-cutting concerns a public API cannot ship without: CORS and why a permissive policy is a vulnerability, security headers, rate limiting (token bucket, per-key versus global, and what breaks across multiple instances), and request-size and body limits. Returns to `ResponseWriter` for the exact problem Lesson 33 named — implementing a wrapper that preserves `http.Flusher`, `http.Hijacker`, and `io.ReaderFrom` so streaming, upgrades, and efficient copies survive it. Surveys how the standard library, common routers, and full frameworks express middleware, so an unfamiliar production codebase is readable and the cost of adopting one is clear. Finally, the boundary question with a real case rather than a slogan: a rule that depends on the resource being acted upon cannot live in middleware, which is why authorization is only partly a middleware concern when it arrives in Lesson 44. *Interview focus: implementing rate limiting, why wrapping the writer can break a dependency, and what belongs in middleware versus the handler.*
+- CORS, and why a permissive policy is a vulnerability
+- Security headers
+- Rate limiting: token bucket, per-key versus global, what breaks across multiple instances
+- Request-size and body limits
+- A `ResponseWriter` wrapper that preserves `http.Flusher`, `http.Hijacker`, and `io.ReaderFrom`
+- How the standard library, common routers, and full frameworks express middleware
+- What belongs in middleware versus the handler: a rule that depends on the resource cannot live in middleware
+- Why authorization is only partly a middleware concern when it arrives in Lesson 44
+- **Interview:** implementing rate limiting; why wrapping the writer can break a dependency; middleware versus handler
 
-**Phase 5 interview checkpoint (answered before any answers are given):** what middleware is and how a chain is constructed; why order changes behaviour; how request logging and status capture are implemented; what happens when `WriteHeader` is called twice; why wrapping `http.ResponseWriter` can be problematic and how to do it safely; how authentication middleware would be structured; how a request timeout is enforced and what it does not stop.
+**Phase 5 interview checkpoint (after Lesson 35, before answers):** what middleware is and how a chain is constructed; why order changes behaviour; how request logging and status capture are implemented; what happens when `WriteHeader` is called twice; why wrapping `http.ResponseWriter` can be problematic and how to do it safely; how authentication middleware would be structured; how a request timeout is enforced and what it does not stop.
 
-### Lesson 36 — Request context: cancellation, deadlines, and request-scoped data
+## Lesson 36 — Request context: cancellation, deadlines, and request-scoped data
 
-With the chain complete, two things it still cannot do motivate this lesson: bound how long a request may run, and hand the request ID from Lesson 34 to the code downstream. `context.Context` as request lifetime plus request-scoped metadata; `r.Context()`; `Done` and `Err`, and `context.Canceled` versus `context.DeadlineExceeded`; `WithTimeout` and `WithDeadline` deriving child contexts; `defer cancel()`; `r.WithContext` inside timeout and request-ID middleware; passing context explicitly as a first parameter rather than storing it on a long-lived service, because a context describes one operation while a service outlives thousands; and cancellation as cooperative — a deadline stops nothing that does not check it.
+- Why this lesson exists now: bound how long a request may run, and hand Lesson 34's request ID downstream
+- `context.Context` as request lifetime plus request-scoped metadata
+- `r.Context()`
+- `Done` and `Err`
+- `context.Canceled` versus `context.DeadlineExceeded`
+- `WithTimeout` and `WithDeadline` deriving child contexts
+- `defer cancel()`
+- `r.WithContext` inside timeout and request-ID middleware
+- Pass context as a first parameter; do not store it on a long-lived service
+- Cancellation is cooperative: a deadline stops nothing that does not check it
+- `WithValue` is **not** for application data or dependencies
+- `WithValue` is for request-scoped metadata that must cross layers: correlation ID, authenticated principal, tracing/span info
+- Ordinary data — a customer, an order, a repository, a logger, configuration — is an ordinary parameter or dependency
+- Test: is the value *about the request* or *for the work*?
+- `Done` returns a channel, used here only as API surface
+- **Interview:** what happens to work in flight when a client disconnects; why a context key is not dependency injection
+- *Deferred:* channels and `select` → Lesson 51
 
-`WithValue` gets an explicit rule, because misusing it is the most common way Go codebases rot. It is **not** a mechanism for passing application data or dependencies down the call stack. It is for request-scoped metadata that belongs to the request's lifecycle and genuinely has to cross layers that do not otherwise care about it: the correlation ID from Lesson 34, the authenticated principal once Lesson 43 introduces one, and tracing/span information when Lesson 56 adds it. Everything else — a customer, an order, a repository, a logger, a configuration value — is an ordinary parameter or an ordinary dependency, and hiding it in a context only removes it from the function signature where a reader would look for it. The test is whether the value is *about the request* or *for the work*. `Done` returns a channel, used here only as API surface; channels and `select` are deferred to Lesson 51. *Interview focus: what actually happens to work in flight when a client disconnects, and why a context key is not dependency injection.*
+## Lesson 37 — Testing the API you already have
 
-### Lesson 37 — Testing the API you already have
-
-`testing`, table-driven tests, subtests, test organization, helpers with `t.Helper`, and meaningful assertions without pulling in an assertion framework; `httptest` for exercising handlers, routes, status codes, headers, JSON contracts, validation, and — the reason this lesson lands here — middleware ordering, status capture, and timeout behavior, none of which can be verified by reading the code. Mocking is treated as a trade-off, not a default: a fake belongs where Lesson 18's interface already provides a seam, and a test that mocks its way to a green result while asserting nothing about behavior is worse than no test. Establishes the unit/integration/end-to-end split the rest of the course follows.
-
-The workflow comes with the tooling, learned by using it rather than as a command reference: `go test` for the package being worked on, `go test ./...` for the whole module as CI will run it, `go test -run` to isolate one failing case or subtest while fixing it, `go test -race` to expose the data races that an HTTP server's concurrent handlers will eventually produce, and `go test -cover` to find untested paths — treated as a diagnostic, never as a target. `testing.B` is introduced as a tool here; profiling comes much later. *Interview focus: what makes an HTTP test useful, stable, and isolated, and when mocking makes a test worse.*
+- `testing`
+- Table-driven tests
+- Subtests
+- Test organization
+- Helpers with `t.Helper`
+- Meaningful assertions without an assertion framework
+- `httptest` for handlers, routes, status codes, headers, JSON contracts, validation
+- Testing middleware ordering, status capture, and timeout behavior
+- Mocking as a trade-off, not a default
+- A fake belongs where Lesson 18's interface already provides a seam
+- Unit versus integration versus end-to-end
+- `go test` for the package being worked on
+- `go test ./...` for the whole module, as CI will run it
+- `go test -run` to isolate a failing case or subtest
+- `go test -race` for data races from concurrent handlers
+- `go test -cover` as a diagnostic, never as a target
+- `testing.B` introduced as a tool; profiling comes later
+- **Interview:** what makes an HTTP test useful, stable, and isolated; when mocking makes a test worse
 
 ---
 
@@ -271,25 +578,66 @@ The workflow comes with the tooling, learned by using it rather than as a comman
 
 The API still serves values constructed in memory. This phase replaces that, and the database is what finally forces real error design.
 
-### Lesson 38 — A real schema and migrations
+## Lesson 38 — A real schema and migrations
 
-Modelling the API's domain in PostgreSQL: tables, keys, constraints, and the types that matter (`timestamptz`, numeric versus float, `text`); why constraints belong in the database rather than only in validation code; and versioned migrations as the way schema changes ship.
+- Modelling the API's domain in PostgreSQL
+- Tables, keys, constraints
+- Types that matter: `timestamptz`, numeric versus float, `text`
+- Why constraints belong in the database, not only in validation code
+- Versioned migrations as the way schema changes ship
 
-### Lesson 39 — `database/sql` and talking to PostgreSQL from Go
+## Lesson 39 — `database/sql` and talking to PostgreSQL from Go
 
-The driver model and why `database/sql` is an abstraction over one, `sql.DB` as a pool rather than a connection, `QueryContext`/`QueryRowContext`/`ExecContext` — the payoff for the context work in Lesson 36 — `Scan` and its type mapping, `NULL` and `sql.Null*`, `defer rows.Close()` and `rows.Err()`, parameterized queries and SQL injection, prepared statements where justified, and pool sizing and connection lifetime. Persistence goes behind an interface only where something must actually vary — the test seam Lesson 18 already established, or a second implementation that genuinely exists. A repository layer whose only job is to mirror the database, or a service layer that forwards one call, is named as the cargo cult it is. Closes with the ecosystem question so the choice is informed rather than inherited: hand-written SQL, `sqlx`-style helpers, query builders, code generation such as `sqlc`, and full ORMs such as GORM — what each buys, what each costs, and why Go leans closer to SQL than C# does to EF. *Interview focus: what `sql.DB` actually holds, and why a query without a context is a liability.*
+- The driver model, and why `database/sql` is an abstraction over one
+- `sql.DB` as a pool, not a connection
+- `QueryContext` / `QueryRowContext` / `ExecContext`
+- `Scan` and its type mapping
+- `NULL` and `sql.Null*`
+- `defer rows.Close()` and `rows.Err()`
+- Parameterized queries and SQL injection
+- Prepared statements where justified
+- Pool sizing and connection lifetime
+- Persistence behind an interface only where something must actually vary
+- A repository that only mirrors the database, or a service that forwards one call, is cargo-cult
+- Hand-written SQL, `sqlx`-style helpers, query builders, `sqlc`, GORM: what each buys and costs
+- Why Go leans closer to SQL than C# does to EF
+- **Interview:** what `sql.DB` actually holds; why a query without a context is a liability
 
-### Lesson 40 — Errors that cross layers
+## Lesson 40 — Errors that cross layers
 
-`sql.ErrNoRows` is the first error whose *identity* matters, which makes this the natural point for the rest of Go's error model: sentinel errors, custom error types carrying data, wrapping with `%w`, `errors.Is` for identity and `errors.As` for extraction, choosing how far to wrap, and mapping a domain outcome to `404`, `409`, or `500` at the transport boundary without leaking driver detail to clients. *Interview focus: error identity versus error text, and where HTTP mapping belongs.*
+- `sql.ErrNoRows` as the first error whose identity matters
+- Sentinel errors
+- Custom error types carrying data
+- Wrapping with `%w`
+- `errors.Is` for identity
+- `errors.As` for extraction
+- How far to wrap
+- Mapping a domain outcome to `404`, `409`, or `500` at the transport boundary
+- Not leaking driver detail to clients
+- **Interview:** error identity versus error text; where HTTP mapping belongs
 
-### Lesson 41 — Transactions and correctness
+## Lesson 41 — Transactions and correctness
 
-`BeginTx`, commit and rollback via `defer`, choosing a transaction boundary and why it usually belongs above the repository, isolation levels and the anomalies each permits, row locking and `SELECT ... FOR UPDATE`, deadlocks and retry-safe transactions, statement timeouts, and integration tests running against a real PostgreSQL instance — a disposable container rather than a shared environment or an in-memory substitute that does not share the real engine's semantics. *Interview focus: picking an isolation level, and what a transaction held open across an HTTP call does to a pool.*
+- `BeginTx`
+- Commit and rollback via `defer`
+- Choosing a transaction boundary, usually above the repository
+- Isolation levels and the anomalies each permits
+- Row locking and `SELECT ... FOR UPDATE`
+- Deadlocks and retry-safe transactions
+- Statement timeouts
+- Integration tests against a real PostgreSQL instance
+- A disposable container, not a shared environment or an in-memory substitute
+- **Interview:** picking an isolation level; what a transaction held open across an HTTP call does to a pool
 
-### Lesson 42 — Query performance from the application side
+## Lesson 42 — Query performance from the application side
 
-Indexes and what they cost on write, reading `EXPLAIN (ANALYZE, BUFFERS)`, the N+1 pattern and how an API's shape causes it, keyset versus offset scanning, connection-pool exhaustion and how it presents as latency, and query timeouts driven by the request context. *Interview focus: diagnosing a query that is slow only in production.*
+- Indexes and what they cost on write
+- Reading `EXPLAIN (ANALYZE, BUFFERS)`
+- The N+1 pattern, and how an API's shape causes it
+- Keyset versus offset scanning
+- Connection-pool exhaustion presenting as latency
+- Query timeouts driven by the request context
+- **Interview:** diagnosing a query that is slow only in production
 
 ---
 
@@ -297,17 +645,40 @@ Indexes and what they cost on write, reading `EXPLAIN (ANALYZE, BUFFERS)`, the N
 
 *Backend / API Engineering · Production / Engineering* · Lessons 43–45
 
-### Lesson 43 — Authentication
+## Lesson 43 — Authentication
 
-Password hashing with a memory-hard function and why not SHA-family, the login flow, sessions versus tokens and what each costs, JWT structure, signing, validation pitfalls, and expiry/refresh, secure cookie attributes, and where OAuth2/OIDC fit. Delivered through the middleware and context mechanisms already built: identity into context, credentials never into logs.
+- Password hashing with a memory-hard function, and why not SHA-family
+- The login flow
+- Sessions versus tokens, and what each costs
+- JWT structure, signing, validation pitfalls, expiry and refresh
+- Secure cookie attributes
+- Where OAuth2 / OIDC fit
+- Identity into context via the middleware already built
+- Credentials never into logs
 
-### Lesson 44 — Authorization
+## Lesson 44 — Authorization
 
-Authentication answers who; authorization answers whether. Resource ownership checks, role and policy models, why authorization usually cannot live entirely in middleware, failing closed, and avoiding the object-level access flaws that dominate real API breaches. *Interview focus: where an authorization decision belongs, and how it is tested.*
+- Authentication answers who; authorization answers whether
+- Resource ownership checks
+- Role and policy models
+- Why authorization usually cannot live entirely in middleware
+- Failing closed
+- Avoiding object-level access flaws
+- **Interview:** where an authorization decision belongs, and how it is tested
 
-### Lesson 45 — API evolution and usability
+## Lesson 45 — API evolution and usability
 
-Resource-oriented design revisited now that the data is real — what is a resource, what is a sub-resource, what is an action that does not fit REST, and when a non-REST endpoint is the honest answer. Then, since collections now come from a database with indexes behind them: pagination (offset versus keyset, and consistency under concurrent writes), filtering, sorting, and search; PUT versus PATCH using the pointer-presence model from Lesson 30; idempotency keys stored transactionally so a retried write is safe; a stable error contract; versioning and backward compatibility introduced only when a contract genuinely must change; content negotiation where it earns its place rather than by reflex; and documenting the API with OpenAPI. *Interview focus: pagination consistency, and making a payment endpoint safe to retry.*
+- Resource-oriented design with real data: resource, sub-resource, action that does not fit REST
+- When a non-REST endpoint is the honest answer
+- Pagination: offset versus keyset, consistency under concurrent writes
+- Filtering, sorting, and search
+- PUT versus PATCH using the pointer-presence model from Lesson 30
+- Idempotency keys stored transactionally
+- A stable error contract
+- Versioning and backward compatibility only when a contract must change
+- Content negotiation where it earns its place
+- Documenting the API with OpenAPI
+- **Interview:** pagination consistency; making a payment endpoint safe to retry
 
 ---
 
@@ -315,23 +686,61 @@ Resource-oriented design revisited now that the data is real — what is a resou
 
 *Go Language* · Lessons 46–49
 
-The service is now large enough that its own code raises these questions. Each topic is applied to code already written rather than demonstrated in isolation.
+Applied to code already written, not demonstrated in isolation.
 
-### Lesson 46 — Go's type system in depth
+## Lesson 46 — Go's type system in depth
 
-Defined types versus aliases and what each one actually creates; underlying types and the conversion rules that follow from them; why a `UserID` defined as an `int` stops being interchangeable with every other `int` in the service, and what that buys at an API boundary. The numeric types in full: sized integers, signed versus unsigned, overflow behaviour, and why `float64` carries its width in its name — the question left open in Lesson 4. Then the case that matters for a backend: money must not be a `float64`, because binary floating point cannot represent `0.10`, and the alternatives are integer minor units or a decimal type mapped to PostgreSQL `numeric`. Zero values as a deliberate design tool — making the useful state the zero state so a struct is usable before anything is set. *Interview focus: when a defined type earns its keep, and what goes wrong when money is a float.*
+- Defined types versus aliases, and what each one actually creates
+- Underlying types and conversion rules
+- Why a `UserID` defined as an `int` is not interchangeable with every other `int`
+- Sized integers, signed versus unsigned, overflow behaviour
+- Why `float64` carries its width in its name (from Lesson 4)
+- Why money must not be a `float64`
+- Alternatives: integer minor units, or a decimal type mapped to PostgreSQL `numeric`
+- Zero values as a deliberate design tool
+- **Interview:** when a defined type earns its keep; what goes wrong when money is a float
 
-### Lesson 47 — Interfaces in depth
+## Lesson 47 — Interfaces in depth
 
-A genuine deepening of Lessons 15 and 18, which established implicit satisfaction and using an interface as a dependency. What those lessons could not explain: an interface value is a (type, value) pair, which is why an interface holding a nil `*User` is itself non-nil and `err != nil` fires on an error that was never set — the typed-nil trap, and the pointer-versus-value method set rule that produces it. Method sets stated formally, and why `*responseWriter` rather than `responseWriter` was the implementing type back in Lesson 33. Type assertions and the comma-`ok` form, and type switches — now motivated by `any` from Lesson 31, `errors.As` from Lesson 40, and `Scan` from Lesson 39. Finally, interface placement: defining a small interface where it is consumed rather than beside its implementation, and why an interface with one implementation and no test seam is usually noise. *Interview focus: why a non-nil interface can hold a nil pointer, and which method set a value versus a pointer carries.*
+- Deepens Lessons 15 and 18; does not re-teach implicit satisfaction
+- An interface value is a `(type, value)` pair
+- Typed nil: a non-nil interface holding a nil `*User`
+- Pointer versus value method sets
+- Why Lesson 33's wrapper had to be `*responseWriter`
+- Type assertions and the comma-`ok` form
+- Type switches, motivated by `any`, `errors.As`, and `Scan`
+- Define a small interface at the consumer, not beside the implementation
+- An interface with one implementation and no test seam is usually noise
+- **Interview:** why a non-nil interface can hold a nil pointer; which method set a value versus a pointer carries
 
-### Lesson 48 — Generics where they earn their place
+## Lesson 48 — Generics where they earn their place
 
-Type parameters, constraints, type inference, and generic helpers and containers. Generics vary code by type; interfaces vary it by behavior — recognizing which axis a problem sits on, which is a question Lesson 47 has just made precise. Why generics rarely belong in domain logic. *Interview focus: constraints, the absence of method-based specialization, and choosing an interface over a type parameter.*
+- Type parameters
+- Constraints
+- Type inference
+- Generic helpers and containers
+- Generics vary code by type; interfaces vary it by behavior
+- Why generics rarely belong in domain logic
+- **Interview:** constraints; the absence of method-based specialization; choosing an interface over a type parameter
 
-### Lesson 49 — Packages, standard library, and maintainable boundaries
+## Lesson 49 — Packages, standard library, and maintainable boundaries
 
-Package API design, ownership and dependency direction, `internal`, constructors only where invariants or dependencies demand them, and the standard-library packages a backend leans on (`io` and its interfaces, `time` and timezone handling, `net/url`, `os`, `path/filepath`, `slices`, `maps`, `strings.Builder`, and `unicode/utf8` — which finally settles the rune question raised in Lesson 21). Formatting, `go vet`, linting, documentation comments, and reading Go code the way a reviewer does. *Interview focus: package boundaries, and when *not* to introduce an interface.*
+- Package API design
+- Ownership and dependency direction
+- `internal`
+- Constructors only where invariants or dependencies demand them
+- `io` and its interfaces
+- `time` and timezone handling
+- `net/url`
+- `os`
+- `path/filepath`
+- `slices`, `maps`
+- `strings.Builder`
+- `unicode/utf8`: decoding, runes, the deeper treatment owed from Lesson 21
+- Formatting, `go vet`, linting
+- Documentation comments
+- Reading Go code the way a reviewer does
+- **Interview:** package boundaries; when *not* to introduce an interface
 
 ---
 
@@ -339,25 +748,80 @@ Package API design, ownership and dependency direction, `internal`, constructors
 
 *Backend / API Engineering · Production / Engineering* · Lessons 50–54
 
-### Lesson 50 — HTTP clients and failure-aware integration
+## Lesson 50 — HTTP clients and failure-aware integration
 
-`http.Client` with explicit timeouts and a configured transport, `NewRequestWithContext`, response-body lifecycle and connection reuse, handling non-2xx responses, retries with exponential backoff and jitter, retryable versus non-retryable failures, client-side idempotency, circuit breakers, and bulkheads. External dependencies are treated as unreliable, and their failure behavior is made observable and testable with `httptest.Server`. The structural question gets the same anti-cargo-cult treatment as the repository did: whether an external call deserves its own client type and interface, or whether the handler calling it directly is the honest design at this size. *Interview focus: retry storms, and why a retry without idempotency is a bug.*
+- `http.Client` with explicit timeouts and a configured transport
+- `NewRequestWithContext`
+- Response-body lifecycle and connection reuse
+- Handling non-2xx responses
+- Retries with exponential backoff and jitter
+- Retryable versus non-retryable failures
+- Client-side idempotency
+- Circuit breakers
+- Bulkheads
+- External dependencies as unreliable
+- Failure behavior made observable and testable with `httptest.Server`
+- Whether an external call deserves its own client type and interface
+- **Interview:** retry storms; why a retry without idempotency is a bug
 
-### Lesson 51 — Concurrency foundations
+## Lesson 51 — Concurrency foundations
 
-Goroutines and their lifecycle, channel ownership and direction, buffered versus unbuffered semantics, closing and ranging, `select`, timers, `sync.Mutex`/`RWMutex`/`WaitGroup`/`Once`, atomics, and the happens-before model at a practical level. Closes the loop on `ctx.Done()`, which Lesson 36 used without explaining the channel underneath. *Interview focus: when a mutex is simpler and safer than a channel.*
+- Goroutines and their lifecycle
+- Channel ownership and direction
+- Buffered versus unbuffered semantics
+- Closing and ranging
+- `select`
+- Timers
+- `sync.Mutex` / `RWMutex` / `WaitGroup` / `Once`
+- Atomics
+- Happens-before at a practical level
+- The channel underneath `ctx.Done()` from Lesson 36
+- **Interview:** when a mutex is simpler and safer than a channel
 
-### Lesson 52 — Concurrency patterns and failure modes
+## Lesson 52 — Concurrency patterns and failure modes
 
-Worker pools, bounded concurrency with semaphores, fan-out/fan-in, pipelines, aggregating results and errors with `errgroup`, propagating cancellation, and the failure modes that matter: data races, deadlocks, goroutine leaks, and work that outlives the request that started it. Driven by race-detector-backed tests. *Interview focus: bounding concurrency, and finding a leaking goroutine.*
+- Worker pools
+- Bounded concurrency with semaphores
+- Fan-out / fan-in
+- Pipelines
+- Aggregating results and errors with `errgroup`
+- Propagating cancellation
+- Data races
+- Deadlocks
+- Goroutine leaks
+- Work that outlives the request that started it
+- Race-detector-backed tests
+- **Interview:** bounding concurrency; finding a leaking goroutine
 
-### Lesson 53 — Background jobs and queues
+## Lesson 53 — Background jobs and queues
 
-Separating request-time work from durable asynchronous work; job payloads and schemas, at-least-once execution, visibility timeouts, idempotent handlers, poison messages, dead-letter queues, scheduling, and operational ownership. Deciding when a PostgreSQL-backed worker suffices and when a broker is justified.
+- Request-time work versus durable asynchronous work
+- Job payloads and schemas
+- At-least-once execution
+- Visibility timeouts
+- Idempotent handlers
+- Poison messages
+- Dead-letter queues
+- Scheduling
+- Operational ownership
+- When a PostgreSQL-backed worker suffices, and when a broker is justified
 
-### Lesson 54 — Kafka and event-driven workflows
+## Lesson 54 — Kafka and event-driven workflows
 
-Topics and partitions, ordering guarantees and their scope, consumer groups and rebalancing, offsets and commit strategies, delivery semantics and acknowledgement, retries and DLQs, deduplication, schema evolution, eventual consistency, why distributed transactions across a database and a broker are avoided rather than solved — two-phase commit, sagas, and compensation as the alternatives — and the transactional outbox — which is only implementable because Lesson 41 established transaction boundaries. One workflow is built end to end across API, PostgreSQL, worker, and consumer. *Interview focus: at-least-once delivery, duplicate processing, and consumer lag.*
+- Topics and partitions
+- Ordering guarantees and their scope
+- Consumer groups and rebalancing
+- Offsets and commit strategies
+- Delivery semantics and acknowledgement
+- Retries and DLQs
+- Deduplication
+- Schema evolution
+- Eventual consistency
+- Why distributed transactions across a database and a broker are avoided
+- Two-phase commit, sagas, and compensation as the alternatives
+- Transactional outbox, using Lesson 41's transaction boundaries
+- One workflow end to end: API, PostgreSQL, worker, consumer
+- **Interview:** at-least-once delivery, duplicate processing, consumer lag
 
 ---
 
@@ -365,29 +829,78 @@ Topics and partitions, ordering guarantees and their scope, consumer groups and 
 
 *Production / Engineering* · Lessons 55–59
 
-### Lesson 55 — Configuration, startup, and graceful shutdown
+## Lesson 55 — Configuration, startup, and graceful shutdown
 
-Typed configuration from environment and secrets, validated at startup so a misconfigured service fails immediately rather than on its first request. Signal handling, `http.Server` timeouts, `Shutdown` and in-flight request draining, and health, readiness, and liveness endpoints that mean genuinely different things.
+- Typed configuration from environment and secrets
+- Validation at startup so misconfiguration fails immediately
+- Signal handling
+- `http.Server` timeouts
+- `Shutdown` and in-flight request draining
+- Health, readiness, and liveness as genuinely different endpoints
+- Lifecycle ownership of long-lived dependencies:
+  - PostgreSQL connection pool
+  - HTTP client / transport
+  - Kafka consumer
+  - Worker pool
+  - Metrics exporter
+  - Tracer provider
+- Who creates each, who owns it, who closes or stops it
+- Created once in `main`, passed explicitly, released by the creator
+- Startup order: configuration → pools and clients → workers and consumers → HTTP server last
+- Shutdown order: stop accepting work → drain requests → cancel worker/consumer contexts → close pools and clients → flush telemetry last
+- Ties together `defer` (Lesson 19), context cancellation (Lesson 36), and worker/consumer loops (Lessons 52–54)
+- **Interview:** what the service does between SIGTERM and exit
 
-The other half of the lesson is **lifecycle ownership**, which the service can no longer avoid now that it holds a PostgreSQL connection pool, an `http.Client` and its transport, a Kafka consumer, a worker pool, a metrics exporter, and a tracer provider. For each one: who constructs it, who owns it for the life of the process, and who is responsible for closing or stopping it. The rule is that a dependency is created once in `main`, passed explicitly to whatever uses it, and released by the code that created it — not opened lazily somewhere in a handler, not stashed in a package-level variable, and not closed by a consumer that does not own it.
+## Lesson 56 — Observability and production debugging
 
-Ordering follows from the dependency graph. Startup builds from the bottom up — configuration, then the pool and clients, then the workers and consumers that use them, then the HTTP server last, because accepting traffic before its dependencies are ready is what a readiness probe exists to prevent. Shutdown reverses it: stop accepting new work, drain in-flight requests with `Shutdown`, cancel the context the workers and the Kafka consumer are selecting on so they finish their current message and commit their offsets, then close the pool and clients, and flush the metrics exporter and tracer provider last so the shutdown itself is observable. This is where `defer` from Lesson 19, context cancellation from Lesson 36, and the worker and consumer loops from Lessons 52–54 become one coordinated sequence — and where scattered ownership shows its cost, because a dependency closed in the wrong order produces errors on connections that are still in use. *Interview focus: what your service does between receiving SIGTERM and exiting.*
+- Instrumentation middleware: request metrics and a trace span per request
+- Built on the status wrapper from Lesson 33 and the correlation ID from Lesson 36
+- Correlation IDs across handler, database, client, and worker
+- Metrics and the RED / USE views
+- SLOs, dashboards, and alerts worth waking up for
+- Distributed tracing with OpenTelemetry and context propagation
+- Log levels, sampling, and cost
+- Concepts behind tools such as Datadog
+- Following one request across every component
+- **Interview:** what you actually look at when latency rises at 3am
 
-### Lesson 56 — Observability and production debugging
+## Lesson 57 — Reliability and security engineering
 
-Completes the middleware track: instrumentation middleware emitting request metrics and opening a trace span per request, built on the status wrapper from Lesson 33 and the correlation ID from Lesson 36. Then the system around it — correlation IDs carried across handler, database, client, and worker; metrics and the RED/USE views; SLOs, dashboards, and alerts worth waking up for; distributed tracing with OpenTelemetry and context propagation; log levels, sampling, and cost; and the concepts behind tools such as Datadog. One request is followed across every component. *Interview focus: what you actually look at when latency rises at 3am.*
+- Timeout budgets across a call chain
+- Backpressure
+- Overload protection and load shedding
+- Caching and invalidation trade-offs
+- Graceful degradation
+- TLS
+- Secret handling and rotation
+- Input and output safety
+- Common API vulnerability classes
+- Dependency and supply-chain risk
+- Incident-oriented runbooks
+- **Interview:** containing a failing dependency instead of amplifying it
 
-### Lesson 57 — Reliability and security engineering
+## Lesson 58 — Performance and Go runtime diagnostics
 
-Timeout budgets across a call chain, backpressure, overload protection and load shedding, caching and invalidation trade-offs, graceful degradation, TLS, secret handling and rotation, input and output safety, the common API vulnerability classes, dependency and supply-chain risk, and incident-oriented runbooks. *Interview focus: containing a failing dependency instead of amplifying it.*
+- Benchmarking a representative workload
+- `pprof` for CPU, heap, and blocking profiles
+- The execution tracer
+- Escape analysis and allocation reduction
+- GC behavior and `GOGC` / memory limits
+- HTTP-level costs: JSON encoding, body copying, connection handling
+- When a database or network bound makes Go-level optimization pointless
+- Measure first, change second
+- **Interview:** finding the bottleneck before changing code
 
-### Lesson 58 — Performance and Go runtime diagnostics
+## Lesson 59 — Delivery, deployment, and architecture review
 
-Benchmarking a representative workload, `pprof` for CPU, heap, and blocking profiles, the execution tracer, escape analysis and allocation reduction, GC behavior and `GOGC`/memory limits, HTTP-level costs such as JSON encoding, body copying, and connection handling, and knowing when a database or network bound makes Go-level optimization pointless. Measure first, change second. *Interview focus: finding the bottleneck before changing code.*
-
-### Lesson 59 — Delivery, deployment, and architecture review
-
-Go tooling in CI, the unit/integration/contract test split, linting and `govulncheck`, multi-stage Docker builds and image hardening, CI/CD pipelines, deployment strategies and rollback, and the Kubernetes concepts a service owner needs: probes, resource requests and limits, configuration and secrets, autoscaling. The service's architecture is then reviewed by dependency direction, operational ownership, and failure behavior — not by folder fashion.
+- Go tooling in CI
+- Unit / integration / contract test split
+- Linting and `govulncheck`
+- Multi-stage Docker builds and image hardening
+- CI/CD pipelines
+- Deployment strategies and rollback
+- Kubernetes for a service owner: probes, resource requests and limits, configuration and secrets, autoscaling
+- Architecture review by dependency direction, operational ownership, and failure behavior — not folder fashion
 
 ---
 
@@ -395,13 +908,25 @@ Go tooling in CI, the unit/integration/contract test split, linting and `govulnc
 
 *All three areas* · Lessons 60–61
 
-### Lesson 60 — Production service and design defense
+## Lesson 60 — Production service and design defense
 
-Not a new project: the service that has been growing since Lesson 25, finished and operated. It carries a documented HTTP API, PostgreSQL persistence with migrations, authentication and authorization, meaningful tests, context-aware external integration, bounded background work, an event-driven workflow, structured logs, metrics and traces, health endpoints, a container image, and CI/CD. Its design document must state the API contract, data model, transaction boundaries, concurrency limits, retry and idempotency strategy, observability plan, security assumptions, and failure modes.
+- Not a new project: the service growing since Lesson 25, finished and operated
+- Documented HTTP API
+- PostgreSQL persistence with migrations
+- Authentication and authorization
+- Meaningful tests
+- Context-aware external integration
+- Bounded background work
+- An event-driven workflow
+- Structured logs, metrics, and traces
+- Health endpoints
+- A container image and CI/CD
+- Design document covering: API contract, data model, transaction boundaries, concurrency limits, retry and idempotency strategy, observability plan, security assumptions, failure modes
 
-### Lesson 61 — Demonstrate professional proficiency
+## Lesson 61 — Demonstrate professional proficiency
 
-Defend a system design involving an API, a database, a justified cache, external dependencies, workers and queues, authentication, observability, failure handling, scaling, and deployment — and answer the interview material accumulated across the course cold.
+- Defend a system design involving an API, a database, a justified cache, external dependencies, workers and queues, authentication, observability, failure handling, scaling, and deployment
+- Answer the interview material accumulated across the course cold
 
 ---
 
