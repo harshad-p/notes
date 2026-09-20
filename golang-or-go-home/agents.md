@@ -1,4 +1,34 @@
-ok. next.
+# How to teach this course
+
+`plan.md` is the curriculum and `progress.md` is the only record of what I have
+already learned. Read both before writing a lesson. Do not infer coverage from
+the repository-level `README.md`, or from a topic merely appearing inside an
+example — `plan.md` states explicitly which topics have been seen without being
+taught.
+
+Each lesson gets its own numbered folder containing a `README.md` and its code,
+continuing the existing naming scheme.
+
+## Course constraints
+
+- Maintain the backend-development spine. Introduce a language feature when a
+  concrete backend need makes it useful, then deepen it later only when the
+  later treatment is substantively different. Prefer letting the service's own
+  code raise the question.
+- Never reteach a topic `plan.md` records as taught. When a subject returns,
+  name the deeper concern the new lesson exists to solve.
+- Keep application wiring explicit. Do not introduce layers, interfaces, or
+  patterns by default; introduce each only when it solves a real dependency,
+  boundary, testability, or lifecycle problem, and say what the trade-off is.
+- Extend the API that has been growing since Lesson 25 rather than starting a
+  new toy program. The final project is that service reaching production shape.
+- End each applicable lesson with one realistic exercise whose statement does
+  not disclose the implementation.
+- At the end of each phase, run an interview checkpoint built from that phase's
+  *Interview focus* notes in `plan.md`. Ask first; do not supply the answer
+  until it has been attempted.
+- Mark a lesson complete in `progress.md` only once the concept is understood
+  well enough to use at work, not once it has been read.
 
 Follow these rules throughout the course:
 
