@@ -58,12 +58,12 @@ These have appeared but are **not** learned, and each has a scheduled lesson:
 | --- | --- | --- |
 | `error` wrapping, custom error types | Lesson 16 promises them later | Lesson 40 |
 | Channels, `select` | Not yet seen; `ctx.Done()` will surface one | Lesson 51 |
-| PostgreSQL, `database/sql` | Illustrative future example in Lessons 18 and 30 | Lessons 38–39 |
+| PostgreSQL, `database/sql` | Named as a possible future implementation in Lesson 18; mentioned again in Lesson 30 | Lessons 38–39 |
 | Test fakes | Motivated the interface in Lesson 18 | Lesson 37 |
 | Optional `ResponseWriter` interfaces | Named as a caveat in Lesson 33 | Lesson 35 |
 | Runes, UTF-8 internals | Named in Lesson 21 without explanation; the minimal bridge is owed there | Lesson 49 |
 | Go's full numeric types | `float64` naming deferred in Lesson 4 | Lesson 46 |
-| `GOROOT` / `GOPATH` | Shown in Lesson 0 | Covered enough by Lesson 17 |
+| `GOROOT` / `GOPATH` | Shown in `go env` output in Lesson 0, explicitly postponed | Lesson 17 (top-up owed) |
 | `context.Context` | Drafted, then pulled back out as premature | Lesson 36 |
 
 ## How the course is taught
@@ -91,7 +91,8 @@ These have appeared but are **not** learned, and each has a scheduled lesson:
 - `go version`
 - Platform install paths
 - `go env`
-- `GOROOT` / `GOPATH` shown, taught properly in Lesson 17
+- `GOROOT` / `GOPATH` shown in `go env` output, not explained
+- *Deferred:* what those values mean → Lesson 17
 
 ## Lesson 1 — Understanding a Go project
 
@@ -265,7 +266,12 @@ These have appeared but are **not** learned, and each has a scheduled lesson:
 - Capitalization as the export rule
 - The module path as the root of import paths
 - What `go mod init` establishes
-- `GOROOT` / `GOPATH` covered enough here
+- *Top-up owed:* `GOROOT` versus `GOPATH` versus modules
+  - `GOROOT` is the toolchain and standard library; you almost never set it
+  - `GOPATH` was the pre-modules workspace; putting projects there is obsolete
+  - What `GOPATH` still is: module cache (`pkg/mod`) and default `go install` bin directory (`GOBIN` / `GOPATH/bin`)
+  - Why a module (`go.mod`) is not "a project inside GOPATH"
+  - `go env GOROOT`, `go env GOPATH`, `go env GOMODCACHE`
 
 ## Lesson 18 — A small service boundary
 
@@ -279,6 +285,7 @@ These have appeared but are **not** learned, and each has a scheduled lesson:
 - A test fake as the motivation for the interface
 - Composition instead of inheritance
 - Interface *use*, not interface design in depth
+- PostgreSQL / `sql.DB` named only as a possible later implementation of the same interface; not taught here → Lessons 38–39
 
 ## Lesson 19 — Cleanup with `defer`
 
@@ -304,13 +311,12 @@ These have appeared but are **not** learned, and each has a scheduled lesson:
 
 - Concatenation
 - A Go string is a sequence of bytes holding UTF-8-encoded text
-- `len` counts bytes, not human-readable characters
-- Indexing yields a `byte`
+- `len` counts bytes, not human-readable characters (`"café"` as the example)
+- Indexing yields a `byte` (numeric code, not a character)
 - `fmt.Printf` and verbs, introduced via `%c`
-- The `strings` package
-- `rune` as a Unicode code point — enough to know why it exists
-- A character outside ASCII occupies several bytes, so byte indexing can split one
-- `range` over a string decodes runes rather than walking bytes
+- The `strings` package: `Contains`, `ToUpper`, `ToLower`
+- `rune` is named, not explained
+- *Top-up owed:* a `rune` is a Unicode code point; byte indexing can split a multi-byte character; `range` over a string decodes runes
 - *Deferred:* decoding, normalization, `unicode/utf8` → Lesson 49
 
 ## Lesson 22 — Pointer syntax in practice

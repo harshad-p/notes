@@ -19,7 +19,7 @@ A lesson counts as complete when its concepts are understood **and** its exercis
 - `go version`
 - Platform install paths
 - `go env`
-- `GOROOT` / `GOPATH` shown, taught properly in Lesson 17
+- `GOROOT` / `GOPATH` shown, not explained (top-up owed in Lesson 17)
 
 ### Lesson 1 — Understanding a Go project
 
@@ -201,6 +201,7 @@ A lesson counts as complete when its concepts are understood **and** its exercis
 - Capitalization as the export rule
 - Module path as the root of import paths
 - What `go mod init` establishes
+- `GOROOT` / `GOPATH` / module cache: top-up still owed
 
 ### Lesson 18 — A small service boundary
 
@@ -214,6 +215,7 @@ A lesson counts as complete when its concepts are understood **and** its exercis
 - Explicit wiring in `main`
 - A test fake as the motivation for the interface
 - Composition instead of inheritance
+- PostgreSQL named only as a possible later implementation, not taught
 
 ### Lesson 19 — Cleanup with `defer`
 
@@ -246,7 +248,7 @@ A lesson counts as complete when its concepts are understood **and** its exercis
 - Indexing yields a `byte`
 - `fmt.Printf` and verbs
 - The `strings` package
-- `rune` as a Unicode code point (bridge only; decoding in Lesson 49)
+- `rune` named, not explained (bridge still owed)
 
 ### Lesson 22 — Pointer syntax in practice
 
