@@ -393,6 +393,8 @@ A lesson counts as complete when its concepts are understood **and** its exercis
 
 ### Lesson 34 — Middleware composition and ordering
 
+`phase-05-finish-the-http-boundary-properly/027-middleware-composition-and-ordering`
+
 - [ ] Lesson complete
 - Chain helper replacing nested calls
 - Reverse-wrapping order

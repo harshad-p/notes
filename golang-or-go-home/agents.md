@@ -30,6 +30,22 @@ scheme and when to create those files is defined under *Chapter progression*.
 - Mark a lesson complete in `progress.md` only once the concept is understood
   well enough to use at work, not once it has been read.
 
+## Language
+
+I am an experienced developer. This is my first time learning Go.
+
+- Do not explain programming I already know (`if`, what a function is, what
+  JSON is). That is treating me like a beginner at software, which I am not.
+- Do explain every new Go idea in plain language. Short sentences. One idea
+  per sentence. Say what it is, then why it exists, then how it works.
+- Do not pack three claims into one sentence. Do not write like a textbook
+  or like literature.
+- Do not use a Go word, API, or behaviour until this lesson or an earlier
+  one has introduced it. If the next sentence needs `panic`, teach `panic`
+  first.
+- Technical terms are fine once they have been defined. Dense phrasing is
+  not the same as precision.
+
 ## Chapter progression
 
 When I say "next", "next chapter", or "continue":
@@ -118,10 +134,11 @@ Follow these rules throughout the course:
    - One good example is normally enough.
    - Do not give multiple examples that demonstrate exactly the same thing.
    - Only add another example when it demonstrates a meaningful difference, edge case, common mistake, or important behavior.
-5. **Don't dumb things down.**
-   - I am an experienced software developer.
-   - Use proper technical terminology and assume I can follow it.
-   - The goal is depth and understanding, not oversimplification.
+5. **Don't dumb things down. Don't dress them up either.**
+   - I am an experienced software developer, new to Go.
+   - Skip universal programming basics. Do not skip a Go concept, and do not
+     hide it inside a long sentence.
+   - Use the real name of a thing after you have said what it is.
 6. **Avoid cargo-cult explanations.**
    - Explain why something is useful and what problem it solves.
    - If something is optional, say so.

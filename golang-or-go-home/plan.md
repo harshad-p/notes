@@ -511,6 +511,8 @@ Middleware is a thread through the rest of the course. Each concern lands where 
 
 ## Lesson 34 — Middleware composition and ordering
 
+`phase-05-finish-the-http-boundary-properly/027-middleware-composition-and-ordering`
+
 - A chain helper replacing nested calls
 - Reverse-wrapping order so a chain reads top-to-bottom
 - Building the chain once at startup, not per request
