@@ -427,7 +427,7 @@ The second is how we'll normally build applications.
 
 ---
 
-# Checkpoint
+## Checkpoint
 
 Before moving to **0.2**, you should be able to answer these in your own words:
 
@@ -437,6 +437,33 @@ Before moving to **0.2**, you should be able to answer these in your own words:
 4. What happens when you run `python3 hello.py`?
 5. What is the `>>>` prompt?
 6. What is the difference between using the REPL and running a `.py` file?
+
+## Answers
+
+1. The Python interpreter reads your Python source code and executes it.
+2. `python3` runs Python programs; `pip3` installs Python packages.
+3. `python3` means “use Python 3,” rather than Python 2. The important point is that `python3` explicitly selects the Python 3 interpreter.
+4. `python3 hello.py` tells the Python 3 interpreter to read and execute `hello.py`.
+5. `>>>` is the prompt shown by the Python REPL.
+6. The REPL is useful for quickly experimenting with Python code without creating a `.py` file.
+
+One useful distinction to keep in your head:
+
+```text
+python3 hello.py
+       │
+       └── "Python, execute this source file"
+```
+
+versus:
+
+```text
+python3
+   ↓
+>>>
+   ↓
+"Python, I'm going to give you code interactively."
+```
 
 ### Practical task
 
@@ -453,4 +480,6 @@ Then run something in the REPL and create/run your own `hello.py`.
 
 **Don't just copy the commands blindly.** The important part of this lesson is that you understand what each command is doing.
 
-Once you've done that, tell me your Python version and your answers to the six questions, and we'll move to **0.2 — Your First Python Program**.
+### Next Lesson → 0.2 Your First Python Program
+
+We'll go one step further and look at what actually happens when a `.py` file is executed, including the relationship between your terminal, the interpreter, and your Python code.
