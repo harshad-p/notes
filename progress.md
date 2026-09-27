@@ -3,7 +3,7 @@
 ## 0. Setup & First Steps
 
 - [x] 0.1 Python Development Environment
-- [ ] 0.2 Your First Python Program
+- [x] 0.2 Your First Python Program
 - [ ] 0.3 Your First Python Project
 - [ ] 0.4 Development Tools
 - [ ] 0.5 First Project Checkpoint
