@@ -2,13 +2,7 @@
 
 ## Part 0 — Interview Foundations
 
-- [ ] 0.1 How to approach technical questions
-- [ ] 0.2 "Why X over Y?" questions
-- [ ] 0.3 Explaining trade-offs
-- [ ] 0.4 Diagnosing instead of guessing
-- [ ] 0.5 How to reason through unfamiliar code
-- [ ] 0.6 Coding-interview approach
-- [ ] 0.7 System-design approach
+- [ ] 0.1
 
 ## Part 1 — C# Core
 

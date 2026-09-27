@@ -1,3 +1,5 @@
+# Curriculum
+
 ## Part 0 — Interview Foundations
 
 - How to approach technical questions
@@ -12,7 +14,7 @@ This should be short. It's about **how to think**, not C# syntax.
 
 ---
 
-# Part 1 — C# Core
+## Part 1 — C# Core
 
 ### 1.1 Types and Type System
 - Value types vs reference types
@@ -52,7 +54,7 @@ This should be short. It's about **how to think**, not C# syntax.
 
 ---
 
-# Part 2 — Collections
+## Part 2 — Collections
 
 - `Array`
 - `List<T>`
@@ -81,7 +83,7 @@ This should be short. It's about **how to think**, not C# syntax.
 
 ---
 
-# Part 3 — Generics
+## Part 3 — Generics
 
 - Why generics exist
 - Generic methods
@@ -97,7 +99,7 @@ This should be short. It's about **how to think**, not C# syntax.
 
 ---
 
-# Part 4 — Delegates, Lambdas and Events
+## Part 4 — Delegates, Lambdas and Events
 
 - Delegates
 - `Action`
@@ -112,7 +114,7 @@ This should be short. It's about **how to think**, not C# syntax.
 
 ---
 
-# Part 5 — LINQ
+## Part 5 — LINQ
 
 Not just syntax.
 
@@ -151,7 +153,7 @@ This directly connects to the question you were asked:
 
 ---
 
-# Part 6 — Memory & Performance
+## Part 6 — Memory & Performance
 
 - Garbage collection
 - Generations
@@ -172,7 +174,7 @@ This directly connects to the question you were asked:
 
 ---
 
-# Part 7 — Exceptions
+## Part 7 — Exceptions
 
 - Exception hierarchy
 - `try/catch/finally`
@@ -209,7 +211,7 @@ and why the difference matters.
 
 ---
 
-# Part 8 — Async/Await
+## Part 8 — Async/Await
 
 This gets a **deep treatment** because it came up repeatedly.
 
@@ -240,7 +242,7 @@ And:
 
 ---
 
-# Part 9 — Threads, Tasks & Parallelism
+## Part 9 — Threads, Tasks & Parallelism
 
 - `Thread`
 - `Task`
@@ -264,7 +266,7 @@ Key comparisons:
 
 ---
 
-# Part 10 — Concurrent Programming
+## Part 10 — Concurrent Programming
 
 This deserves its own part.
 
@@ -295,7 +297,7 @@ And the exact reasoning problems we practiced:
 
 ---
 
-# Part 11 — Dependency Injection
+## Part 11 — Dependency Injection
 
 - Why DI exists
 - Dependency inversion
@@ -324,7 +326,7 @@ This was something you specifically asked about earlier.
 
 ---
 
-# Part 12 — .NET Runtime
+## Part 12 — .NET Runtime
 
 - CLR
 - .NET runtime
@@ -345,7 +347,7 @@ Useful question:
 
 ---
 
-# Part 13 — ASP.NET Core
+## Part 13 — ASP.NET Core
 
 - Request lifecycle
 - Controllers
@@ -364,7 +366,7 @@ Useful question:
 
 ---
 
-# Part 14 — HTTP & APIs
+## Part 14 — HTTP & APIs
 
 - HTTP methods
 - Status codes
@@ -389,7 +391,7 @@ Even though the Immowelt JD didn't explicitly mention REST, this is still useful
 
 ---
 
-# Part 15 — Middleware & Pipelines
+## Part 15 — Middleware & Pipelines
 
 - Middleware pipeline
 - Request/response pipeline
@@ -408,7 +410,7 @@ Also:
 
 ---
 
-# Part 16 — EF Core & Data Access
+## Part 16 — EF Core & Data Access
 
 - `DbContext`
 - DbSet
@@ -432,7 +434,7 @@ Also:
 
 ---
 
-# Part 17 — SQL
+## Part 17 — SQL
 
 This should be substantial.
 
@@ -491,7 +493,7 @@ This should be substantial.
 
 ---
 
-# Part 18 — Messaging
+## Part 18 — Messaging
 
 - Queues
 - Pub/sub
@@ -515,7 +517,7 @@ Key interview comparison:
 
 ---
 
-# Part 19 — Caching
+## Part 19 — Caching
 
 - Why caching exists
 - Cache-aside
@@ -533,7 +535,7 @@ Key interview comparison:
 
 ---
 
-# Part 20 — Testing & Debugging
+## Part 20 — Testing & Debugging
 
 We already started this area, but I'd make the course more systematic.
 
@@ -565,7 +567,7 @@ We already started this area, but I'd make the course more systematic.
 
 ---
 
-# Part 21 — Design Patterns
+## Part 21 — Design Patterns
 
 Don't turn this into "memorize 23 GoF patterns."
 
@@ -603,7 +605,7 @@ For each:
 
 ---
 
-# Part 22 — Distributed Systems
+## Part 22 — Distributed Systems
 
 This is where the backend knowledge starts coming together.
 
@@ -628,7 +630,7 @@ This is where the backend knowledge starts coming together.
 
 ---
 
-# Part 23 — System Design
+## Part 23 — System Design
 
 Your existing system-design framework fits here.
 
@@ -660,7 +662,7 @@ For each:
 
 ---
 
-# Part 24 — Interview Practice
+## Part 24 — Interview Practice
 
 This is where everything comes together.
 
