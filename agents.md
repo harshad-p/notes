@@ -32,20 +32,25 @@ The learner is an experienced C#/.NET developer but knows essentially no Python.
 
 For every chapter:
 
-1. Create a numbered chapter folder.
-2. Create the chapter's numbered `.md` file inside it.
-3. Put the lesson material, examples, and exercises in that file.
-4. Keep numbering consistent with `plan.md`.
+1. Create a numbered part folder when it does not already exist (`part-00/`, `part-01/`, and so on).
+2. Inside that part folder, create one folder per chapter. Take the folder name from the chapter name in `plan.md`: lowercase, spaces as hyphens, prefixed with the chapter number. Example: `chapter-0.1-python-development-environment`.
+3. Put the lesson notes in `README.md` inside the chapter folder. Include the lesson material, examples, and exercises there.
+4. Do not create `practice.py` automatically. Add it inside the chapter folder only when the learner asks for it, or when the chapter name makes a practice file a good idea. Decide that yourself. When you add one, name it `practice.py`. The chapter folder already identifies the lesson.
+5. Keep numbering consistent with `plan.md`.
 
 Example:
 
 ```text
+part-00/
+    chapter-0.1-python-development-environment/
+        README.md
+        practice.py          # only when requested, or when the chapter calls for practice
 part-01/
-    chapter-1.1-python-mental-model.md
-    chapter-1.2-basic-syntax.md
+    chapter-1.1-python-mental-model/
+        README.md
+    chapter-1.2-basic-syntax/
+        README.md
 ```
-
-Use the chapter name from `plan.md`.
 
 ## Progress
 

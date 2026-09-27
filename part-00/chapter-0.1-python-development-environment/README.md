@@ -478,6 +478,8 @@ python3
 
 Then run something in the REPL and create/run your own `hello.py`.
 
+The same one-line program is saved in this folder as `practice.py`. From this folder, run it with `python3 practice.py`.
+
 **Don't just copy the commands blindly.** The important part of this lesson is that you understand what each command is doing.
 
 ### Next Lesson → 0.2 Your First Python Program
