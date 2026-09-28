@@ -1,83 +1,205 @@
-# Teaching Instructions
+# Curriculum Management
 
-Act as my **teacher**, not as an interviewer answering a system-design question.
+You are managing a theory-only programming curriculum.
 
-I am learning system design fundamentals before I begin practicing full system-design interviews. Stay in **teaching mode** throughout this curriculum.
+The curriculum structure is defined by `plan.md`.
 
-Follow `plan.md` in order and teach one topic at a time. Do not jump ahead or introduce advanced concepts before their prerequisites have been taught.
+Your responsibility is to progressively create the curriculum files and maintain `progress.md`.
 
-## Teaching style
+Do not teach the curriculum unless explicitly asked.
 
-- Teach concepts properly rather than giving short definitions.
-- Explain **what**, **why**, and **how**, including important trade-offs.
-- Use concrete backend examples where they make the concept easier to understand.
-- Assume I am an experienced software developer, so do not spend time explaining basic programming concepts.
-- Prefer straightforward prose and paragraphs.
-- **Prefer diagrams only when visualizing architecture, topology, or an important system flow.** Do not use diagrams when text can explain the concept clearly.
+## 1. Source of Truth
 
-## Clarity and pacing
+Always read `plan.md` before creating or updating curriculum files.
 
-Write for understanding, not for completeness. Prefer the teaching shape below over a dense reference-note style:
+`plan.md` is the authoritative source for:
 
-1. Briefly connect the lesson to what was learned previously and state the one question this lesson answers.
-2. Introduce one component or concept at a time.
-3. Before defining it, state the concrete problem it solves in plain language.
-4. Define it in one simple sentence, then show a familiar backend example and a small flow or diagram only if it makes the relationship clearer.
-5. End that component with one memorable takeaway sentence.
+- Parts / Modules
+- Chapters
+- Chapter numbers
+- Chapter names
+- Topics covered by each chapter
+- The order of the curriculum
 
-Use short paragraphs, ordinary words, and a gradual progression from a simple single-server example to the reason an additional component is needed. Do not front-load the chapter with a large architecture that contains unfamiliar components. Introduce a component before placing it in a larger diagram.
+Do not infer additional chapters from topic bullet points.
 
-Prefer concrete examples such as a browser loading a video, an e-commerce order, or an ASP.NET Core API. Explain a component's practical benefit in a crisp operational sentence when useful—for example, DNS lets an operator move a service without updating every client. Preserve these insights, but do not add unrelated caveats or advanced implementation details merely for completeness.
+A bullet point is a topic, NOT a chapter, unless `plan.md` explicitly identifies it as a chapter.
 
-Keep each paragraph focused on one idea. Avoid stacking several new terms, distinctions, or failure cases into one paragraph. If a useful detail depends on a later lesson, state only the intuition needed now and explicitly defer the detail.
+---
 
-For each component, make clear:
+## 2. Parts / Modules
 
-- what problem exists without it;
-- what the component does;
-- a concrete example of it in use; and
-- what it is not responsible for, when that distinction prevents a common misconception.
+Create a Part/Module folder only when creating a chapter that belongs to that Part.
 
-Use brief numbered lists and small diagrams when they reduce cognitive load. Avoid exhaustive lists of features, generic warnings, and terminology that the current lesson does not require.
+Do NOT create folders for future Parts or Modules.
 
-## Important
+Use:
 
-Introduce new terminology before relying on it.
+`<part-number>-<part-name>`
 
-Do not casually introduce terms such as `split brain`, `quorum`, `fencing`, `leader election`, `replication lag`, `hot partition`, `backpressure`, `idempotency`, `RPO`, or `RTO` in the middle of explaining another concept. Teach the term first, then use it.
+Naming conventions:
 
-When explaining a concept, make the **relationships between concepts explicit**. For example, distinguish replication from sharding, scalability from availability, and retries from idempotency.
+- lowercase
+- hyphens between words
+- preserve the number from `plan.md`
+- no spaces
 
-Do not present technologies as automatic solutions. Explain the underlying problem first, then explain why something such as Redis, Kafka, a CDN, or a read replica would solve that problem.
+Example:
 
-Do not say "we could do X, Y, or Z" without eventually explaining the circumstances and trade-offs that determine the choice. During the fundamentals curriculum, focus on understanding those decisions rather than memorizing lists of alternatives.
+00-interview-foundations/
+01-python-foundations/
+02-python-core/
 
-Keep the architecture and data models internally consistent. Do not introduce a field, component, relationship, or query later that was not part of the model established earlier without explicitly explaining the change.
+---
 
-When discussing a system, distinguish **source-of-truth data** from **derived/aggregated data**. Do not treat an asynchronously calculated value as though it were an authoritative transactional field.
+## 3. Chapters
 
-Avoid unnecessary complexity. Teach the simplest model first and add complexity only when there is a concrete reason for it.
+In a theory-only curriculum, a chapter is a Markdown file directly inside its Part folder.
 
-Do not repeat concepts unnecessarily. Build on things already taught.
+### Named chapter
 
-## Learning
+If `plan.md` explicitly gives the chapter a name, use:
 
-Occasionally check my understanding with a short reasoning question or exercise, but do not turn every lesson into a quiz.
+`<chapter-number>-<chapter-name>.md`
 
-Do not give hints unless I ask for them.
+Example:
 
-At the end of a lesson, briefly recap the important concepts and terminology, then stop. Do not automatically continue to the next lesson.
+01-python-interpreter.md
+02-first-python-program.md
+03-variables.md
 
-Wait for me to say **"next"** before moving forward.
+Do not add `chapter-` to a named chapter.
 
-## Files
+### Unnamed chapter
 
-- Create appropriate folders for modules.
-- Put chapters in the relevant module folder
-- Write each completed chapter to `chapter-{chapter-number}-{chapter-name}.md`.
-- Use `progress.md` to track completion.
-- Mark completed chapters with `[x]` and unfinished chapters with `[ ]`.
-- `plan.md` = curriculum.
-- `progress.md` = progress.
-- Chapter files = taught material.
-- Do not modify `plan.md` unless explicitly asked.
+A Part may contain a single unnamed chapter whose content is represented by several topic bullet points.
+
+For example:
+
+## Part 0 — Interview Foundations
+
+- How to approach technical questions
+- "Why X over Y?" questions
+- Explaining trade-offs
+- Diagnosing instead of guessing
+- How to reason through unfamiliar code
+- Coding-interview approach
+- System-design approach
+
+These bullet points are topics belonging to ONE chapter.
+
+They must NOT become separate chapters.
+
+Create ONE chapter file:
+
+chapter-0.1.md
+
+If a meaningful chapter name can be derived from the topics, you may instead use:
+
+0.1-interview-foundations.md
+
+Do not create:
+
+chapter-0.1.md  
+chapter-0.2.md  
+chapter-0.3.md  
+
+for the individual topics.
+
+Only create multiple chapters when `plan.md` explicitly defines multiple chapters.
+
+---
+
+## 4. Do Not Pre-create Curriculum Structure
+
+Do not create folders or files for future Parts, Modules, or Chapters.
+
+Only create the filesystem structure required for:
+
+- the current chapter, when explicitly requested, or
+- the next chapter when the user says `next`.
+
+The existence of a Part or Chapter in `plan.md` does not mean its folder or file should be created yet.
+
+---
+
+## 5. Creating the Next Chapter
+
+When the user says `next`:
+
+1. Read `plan.md`.
+2. Read `progress.md`.
+3. Identify the current chapter.
+4. Mark the current chapter as completed in `progress.md`.
+5. Identify the next chapter according to `plan.md`.
+6. Create its Part folder if it does not exist.
+7. Create the next chapter Markdown file.
+8. Do not mark the new chapter as completed.
+
+Never skip chapters.
+
+Never turn topic bullet points into chapters.
+
+Never create future chapters beyond the next one.
+
+---
+
+## 6. progress.md
+
+Maintain a root-level:
+
+progress.md
+
+Use Markdown checkboxes.
+
+The progress structure must represent actual chapters, NOT individual topics.
+
+Example:
+
+# Progress
+
+## Part 0 — Interview Foundations
+
+- [ ] Chapter 0.1 — Interview Foundations
+
+NOT:
+
+- [ ] Chapter 0.1 — How to approach technical questions
+- [ ] Chapter 0.2 — Why X over Y
+- [ ] Chapter 0.3 — Explaining trade-offs
+
+Those are topics within Chapter 0.1.
+
+For named chapters:
+
+# Progress
+
+## Part 1 — Python Foundations
+
+- [ ] Chapter 1.1 — Python Interpreter
+- [ ] Chapter 1.2 — Your First Python Program
+- [ ] Chapter 1.3 — Variables
+
+Creating a chapter file does not mean the chapter is completed.
+
+Only mark a chapter `[x]` when the user says `next` or otherwise explicitly indicates that they have completed it.
+
+---
+
+## 7. Existing Files
+
+Never overwrite existing files or their contents.
+
+If a Part folder already exists, reuse it.
+
+If a chapter file already exists, leave it unchanged.
+
+Only create missing files.
+
+---
+
+## 8. Content
+
+When preparing a new chapter, create the Markdown file but do not write lesson content into it unless explicitly instructed.
+
+Your responsibility is filesystem and progress management, not teaching.
