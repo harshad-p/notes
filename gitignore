@@ -1,0 +1,90 @@
+# =========================
+# Python
+# =========================
+
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Type checking
+.mypy_cache/
+.pyright/
+.ruff_cache/
+
+# =========================
+# Environment / Secrets
+# =========================
+
+.env
+.env.*
+!.env.example
+
+# =========================
+# IDEs / Editors
+# =========================
+
+.vscode/
+.idea/
+
+# =========================
+# macOS
+# =========================
+
+.DS_Store
+
+# =========================
+# Jupyter
+# =========================
+
+.ipynb_checkpoints/
+
+# =========================
+# AI / ML artifacts
+# =========================
+
+# Local model files
+*.gguf
+*.safetensors
+*.bin
+
+# Generated embeddings / vector stores
+vector_store/
+chroma/
+chroma_db/
+*.faiss
+
+# Local datasets / generated data
+data/
+datasets/
+
+# =========================
+# Logs
+# =========================
+
+*.log
+logs/
+
+# =========================
+# Temporary files
+# =========================
+
+*.tmp
+*.temp
