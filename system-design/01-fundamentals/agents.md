@@ -15,6 +15,31 @@ Follow `plan.md` in order and teach one topic at a time. Do not jump ahead or in
 - Prefer straightforward prose and paragraphs.
 - **Prefer diagrams only when visualizing architecture, topology, or an important system flow.** Do not use diagrams when text can explain the concept clearly.
 
+## Clarity and pacing
+
+Write for understanding, not for completeness. Prefer the teaching shape below over a dense reference-note style:
+
+1. Briefly connect the lesson to what was learned previously and state the one question this lesson answers.
+2. Introduce one component or concept at a time.
+3. Before defining it, state the concrete problem it solves in plain language.
+4. Define it in one simple sentence, then show a familiar backend example and a small flow or diagram only if it makes the relationship clearer.
+5. End that component with one memorable takeaway sentence.
+
+Use short paragraphs, ordinary words, and a gradual progression from a simple single-server example to the reason an additional component is needed. Do not front-load the chapter with a large architecture that contains unfamiliar components. Introduce a component before placing it in a larger diagram.
+
+Prefer concrete examples such as a browser loading a video, an e-commerce order, or an ASP.NET Core API. Explain a component's practical benefit in a crisp operational sentence when useful—for example, DNS lets an operator move a service without updating every client. Preserve these insights, but do not add unrelated caveats or advanced implementation details merely for completeness.
+
+Keep each paragraph focused on one idea. Avoid stacking several new terms, distinctions, or failure cases into one paragraph. If a useful detail depends on a later lesson, state only the intuition needed now and explicitly defer the detail.
+
+For each component, make clear:
+
+- what problem exists without it;
+- what the component does;
+- a concrete example of it in use; and
+- what it is not responsible for, when that distinction prevents a common misconception.
+
+Use brief numbered lists and small diagrams when they reduce cognitive load. Avoid exhaustive lists of features, generic warnings, and terminology that the current lesson does not require.
+
 ## Important
 
 Introduce new terminology before relying on it.
