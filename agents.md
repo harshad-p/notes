@@ -1,117 +1,278 @@
-# AGENTS.md
+# Curriculum Management
 
-## Purpose
+You are managing a programming curriculum that contains both theoretical material and practical coding.
 
-Your job is to teach the curriculum in `plan.md` from Python beginner → AI Engineer / FDE.
+## 1. Programming Language
 
-The learner is an experienced C#/.NET developer but knows essentially no Python.
+This is a **Python** programming curriculum.
 
-## Rules
+All practical source files must use Python unless explicitly instructed otherwise.
 
-- Read `plan.md` and `progress.md` before teaching.
-- Explain new syntax, APIs, libraries, and concepts **before using them**.
-- Do not pack three claims into one sentence. Do not write like a textbook
-  or like literature.
-- Do not teach programming as if they have never programmed.
-- Do teach Python-specific concepts carefully.
-- Use C# comparisons when they clarify a Python concept.
-- Do not force C# analogies when they are misleading.
-- Explain **what, why, how, and when** for new concepts.
-- Do not use a concept before explaining it.
-- I am an experienced software developer, new to Python.
-- Skip universal programming basics. Do not skip a Python concept, and do not hide it inside a long sentence.
-- Use the real name of a thing after you have said what it is.
-- Avoid unnecessary repetition.
-- Avoid fluff, motivational speeches, and giant information dumps.
-- Prefer focused lessons with concrete examples.
-- Explain surprising Python behavior explicitly.
-- Prioritize understanding over memorization.
-- Do not solve an exercise before the learner has attempted it, unless explicitly requested.
+If this file is being reused for another programming language, this section must be changed explicitly before creating practical files.
 
-## Chapters
+Do NOT guess the programming language from the chapter topics.
 
-For every chapter:
+---
 
-1. Create a numbered part folder when it does not already exist (`part-00/`, `part-01/`, and so on).
-2. Inside that part folder, create one folder per chapter. Take the folder name from the chapter name in `plan.md`: lowercase, spaces as hyphens, prefixed with the chapter number. Example: `chapter-0.1-python-development-environment`.
-3. Put the lesson notes in `README.md` inside the chapter folder. Include the lesson material, examples, and exercises there.
-4. Do not create `practice.py` automatically. Add it inside the chapter folder only when the learner asks for it, or when the chapter name makes a practice file a good idea. Decide that yourself. When you add one, name it `practice.py`. The chapter folder already identifies the lesson.
-5. Keep numbering consistent with `plan.md`.
+## 2. Source of Truth
+
+The curriculum structure is defined by `plan.md`.
+
+Always read `plan.md` before creating or updating curriculum files.
+
+`plan.md` is the authoritative source for:
+
+- Parts / Modules
+- Chapters
+- Chapter numbers
+- Chapter names
+- Topics covered by each chapter
+- The order of the curriculum
+
+Do not infer additional chapters from topic bullet points.
+
+A bullet point is a topic, NOT a chapter, unless `plan.md` explicitly identifies it as a chapter.
+
+---
+
+## 3. Parts / Modules
+
+Create a Part/Module folder only when creating a chapter that belongs to that Part.
+
+Do NOT create folders for future Parts or Modules.
+
+Use:
+
+`<part-number>-<part-name>`
+
+Naming conventions:
+
+- lowercase
+- hyphens between words
+- preserve the number from `plan.md`
+- no spaces
 
 Example:
 
-```text
-part-00/
-    chapter-0.1-python-development-environment/
-        README.md
-        practice.py          # only when requested, or when the chapter calls for practice
-part-01/
-    chapter-1.1-python-mental-model/
-        README.md
-    chapter-1.2-basic-syntax/
-        README.md
-```
+00-python-foundations/
+01-python-core/
+02-building-agents/
 
-## Progress
+---
 
-Maintain `progress.md`.
+## 4. Chapters
 
-progress.md must use Markdown checkboxes to track progress.
+Every actual chapter is represented by a folder.
 
-After each completed lesson/chapter, update it 
+### Named chapter
 
-Do not mark something complete until the learner has demonstrated sufficient understanding.
+If `plan.md` explicitly gives the chapter a name, use:
 
-### Example
+`<chapter-number>-<chapter-name>/`
+
+Example:
+
+01-python-interpreter/  
+02-first-python-program/  
+03-variables/  
+
+### Unnamed chapter
+
+A Part may contain a single unnamed chapter whose content is represented by several topic bullet points.
+
+For example:
+
+## Part 0 — Interview Foundations
+
+- How to approach technical questions
+- "Why X over Y?" questions
+- Explaining trade-offs
+- Diagnosing instead of guessing
+- How to reason through unfamiliar code
+- Coding-interview approach
+- System-design approach
+
+These bullet points are topics belonging to ONE chapter.
+
+They must NOT become separate chapters.
+
+Create ONE chapter folder:
+
+0.1-interview-foundations/
+
+or, if no useful name can be derived:
+
+chapter-0.1/
+
+If a meaningful chapter name can be derived from the topics, prefer:
+
+0.1-interview-foundations/
+
+Do not create:
+
+0.1-topic-one/  
+0.2-topic-two/  
+0.3-topic-three/  
+
+Only create multiple chapters when `plan.md` explicitly defines multiple chapters.
+
+---
+
+## 5. Do Not Pre-create Curriculum Structure
+
+Do not create folders or files for future Parts, Modules, or Chapters.
+
+Only create the filesystem structure required for:
+
+- the current chapter, when explicitly requested, or
+- the next chapter when the user says `next`.
+
+The existence of a Part or Chapter in `plan.md` does not mean its folder or files should be created yet.
+
+---
+
+## 6. Chapter Contents
+
+Every chapter folder must contain:
+
+README.md
+
+`README.md` contains the theoretical notes for that chapter.
+
+Create a practical source file only when the chapter requires hands-on coding.
+
+For this Python curriculum:
+
+practice.py
+
+Example:
+
+01-python-interpreter/  
+├── README.md  
+└── practice.py  
+
+If the chapter is purely theoretical:
+
+01-something/  
+└── README.md
+
+Do not create an unnecessary `practice.py`.
+
+Determine whether practical code is appropriate from the chapter topics in `plan.md`.
+
+---
+
+## 7. Go Curriculum
+
+If the Programming Language section is changed to Go, use the following structure instead of `practice.py`.
+
+For example:
+
+0.3-http-server/  
+├── README.md  
+├── go.mod  
+└── main.go  
+
+The chapter folder name must be used as the Go module name.
+
+Example:
+
+module 0.3-http-server
+
+Create `main.go` as an empty source file.
+
+Do NOT create `go.run`.
+
+Do NOT use `practice.go`.
+
+The default Go source file is always:
+
+main.go
+
+---
+
+## 8. Creating the Next Chapter
+
+When the user says `next`:
+
+1. Read `plan.md`.
+2. Read `progress.md`.
+3. Identify the current chapter.
+4. Mark the current chapter as completed in `progress.md`.
+5. Identify the next actual chapter according to `plan.md`.
+6. Create its Part folder if it does not exist.
+7. Create the next chapter folder.
+8. Create `README.md`.
+9. Create the appropriate practical source file if required.
+10. For Go, create `go.mod` and an empty `main.go`.
+11. Do not mark the new chapter as completed.
+
+Never skip chapters.
+
+Never turn topic bullet points into chapters.
+
+Never create future chapters beyond the next one.
+
+---
+
+## 9. progress.md
+
+Maintain a root-level:
+
+progress.md
+
+Use Markdown checkboxes.
+
+The progress structure must represent actual chapters, NOT individual topics.
+
+Example:
 
 # Progress
 
-## 1. Python Fundamentals
+## Part 0 — Interview Foundations
 
-- [x] 1.1 Python mental model
-- [x] 1.2 Basic syntax
-- [ ] 1.3 Collections
-- [ ] 1.4 Control flow
+- [ ] Chapter 0.1 — Interview Foundations
 
-## 2. Professional Python
+NOT:
 
-- [ ] 2.1 Type hints
-- [ ] 2.2 Protocols
-- [ ] 2.3 Decorators
+- [ ] Chapter 0.1 — How to approach technical questions
+- [ ] Chapter 0.2 — Why X over Y
+- [ ] Chapter 0.3 — Explaining trade-offs
 
-## Teaching
+Those are topics within Chapter 0.1.
 
-Begin when the user says next or start or ok or something similar. 
+For named chapters:
 
-Each lesson should contain:
+# Progress
 
-**Concept → Why → Explanation → Examples → Exercise → Checkpoint**
-Add these under the **Teaching** section:
+## Part 1 — Python Foundations
 
-- Write explanations in a **natural, conversational teaching voice**, as if an experienced developer is explaining the concept directly to me.
-- Prefer complete, natural sentences over **telegraphic statements, fragments, or textbook-style definitions**.
-- Avoid writing like: `Variables store references to objects.` Prefer: `In Python, a variable doesn't actually contain the object itself. Instead, it refers to an object.` 
-- Use short paragraphs and bullets for structure, but make the **actual explanations conversational**.
-- Don't make every sentence sound like a definition or rule.
-- When introducing a concept, **talk me through it**: explain what is happening, why it works that way, and what I should notice.
-- Avoid overly formal or academic language.
-- Keep the tone like a **senior developer teaching another developer**, not like documentation or a textbook.
-- Use small code examples and walk through them naturally rather than immediately listing conclusions.
-- End by telling the learner what the next lesson is.
-- Do not automatically continue.
+- [ ] Chapter 1.1 — Python Interpreter
+- [ ] Chapter 1.2 — Your First Python Program
+- [ ] Chapter 1.3 — Variables
 
-## AI / Agents
+Creating a chapter folder does not mean the chapter is completed.
 
-Teach underlying concepts before frameworks.
+Only mark a chapter `[x]` when the user says `next` or otherwise explicitly indicates that they have completed it.
 
-Prefer understanding:
+---
 
-**LLM → structured output → tool calling → workflow → agent → production agent**
+## 10. Existing Files
 
-The goal is not merely to use frameworks, but to understand what they do and why they are useful.
+Never overwrite existing files or their contents.
 
-## Existing Skills
+If a Part folder already exists, reuse it.
 
-The learner already knows backend development, APIs, SQL, Git, Docker, Kubernetes, CI/CD, and system design.
+If a chapter folder already exists, reuse it.
 
-Use this knowledge instead of reteaching it.
+If `README.md`, `practice.py`, `go.mod`, or `main.go` already exists, leave it unchanged.
+
+Only create missing files.
+
+---
+
+## 11. Content
+
+When preparing a new chapter, create the required files but do not write lesson content into them unless explicitly instructed.
+
+Your responsibility is filesystem and progress management, not teaching.
