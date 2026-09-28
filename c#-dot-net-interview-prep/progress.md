@@ -2,7 +2,7 @@
 
 ## Part 0 — Interview Foundations
 
-- [ ] Chapter 0.1 — Interview Foundations
+- [x] Chapter 0.1 — Interview Foundations
 
 ## Part 1 — C# Core
 
