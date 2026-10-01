@@ -15,3 +15,8 @@
 1. `const` means the value is a **compile-time constant**.
 1. `init` usefulness: lets you create an immutable-style object without requiring a constructor with many parameters.
 1. Object-oriented programming (OOP) is a way of organizing software around objects that combine state and behavior.
+1. obj is Person other
+1. ReferenceEquals(a, b)
+1. IEquatable<Person> provides a strongly typed equality method. It avoids needing to cast from object and is useful to generic collections and APIs that recognize it.
+1. Don't mutate fields used for equality or hashing while an object is stored in a hash-based collection. The collection may have placed the object based on its old hash code and then fail to find it.
+1. For strings, == compares string contents, not object identity

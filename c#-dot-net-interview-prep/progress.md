@@ -8,7 +8,7 @@
 
 - [x] Chapter 1.1 — Types and Type System
 - [x] Chapter 1.2 — Classes and Objects
-- [ ] Chapter 1.3 — Object-Oriented Programming
+- [x] Chapter 1.3 — Object-Oriented Programming
 - [ ] Chapter 1.4 — Equality
 
 ## Part 2 — Collections

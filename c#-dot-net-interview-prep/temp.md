@@ -7,3 +7,4 @@ I am just collecting some topics here as I encounter them. Once the curriculum i
 1. Different ways to implement euqality in a class
 1. with expressions
 1. S.O.L.I.D.
+1. Common methods: string.Compare(), string.Join(), etc.
