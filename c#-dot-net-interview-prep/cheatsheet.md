@@ -14,3 +14,4 @@
 1. `readonly` applies to **fields**, not properties
 1. `const` means the value is a **compile-time constant**.
 1. `init` usefulness: lets you create an immutable-style object without requiring a constructor with many parameters.
+1. Object-oriented programming (OOP) is a way of organizing software around objects that combine state and behavior.

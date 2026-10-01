@@ -7,7 +7,7 @@
 ## Part 1 — C# Core
 
 - [x] Chapter 1.1 — Types and Type System
-- [ ] Chapter 1.2 — Classes and Objects
+- [x] Chapter 1.2 — Classes and Objects
 - [ ] Chapter 1.3 — Object-Oriented Programming
 - [ ] Chapter 1.4 — Equality
 
