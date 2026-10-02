@@ -20,3 +20,13 @@
 1. IEquatable<Person> provides a strongly typed equality method. It avoids needing to cast from object and is useful to generic collections and APIs that recognize it.
 1. Don't mutate fields used for equality or hashing while an object is stored in a hash-based collection. The collection may have placed the object based on its old hash code and then fail to find it.
 1. For strings, == compares string contents, not object identity
+1. Arrays are reference types
+1. `Array.Copy()`
+1. `Clone()` creates a shallow copy of the array.
+1. `CopyTo()` copies all elements into an existing destination array, starting at a specified destination index
+1. `matrix.Rank`
+1. `numbers.IsReadOnly`
+1. `Length` gives the total element count, while `GetLength(dimension)` gives the length of an individual dimension.
+1. `Array.IndexOf()` and `Array.LastIndexOf()`
+1. `Comparer<T>.Create()`
+1. stable sort

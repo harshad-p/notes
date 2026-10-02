@@ -9,11 +9,27 @@
 - [x] Chapter 1.1 — Types and Type System
 - [x] Chapter 1.2 — Classes and Objects
 - [x] Chapter 1.3 — Object-Oriented Programming
-- [ ] Chapter 1.4 — Equality
+- [x] Chapter 1.4 — Equality
 
 ## Part 2 — Collections
 
-- [ ] Chapter 2.1 — Collections
+- [ ] Chapter 2.1 — Array
+- [ ] Chapter 2.2 — List<T>
+- [ ] Chapter 2.3 — Dictionary<TKey,TValue>
+- [ ] Chapter 2.4 — HashSet<T>
+- [ ] Chapter 2.5 — Queue<T>
+- [ ] Chapter 2.6 — Stack<T>
+- [ ] Chapter 2.7 — LinkedList<T>
+- [ ] Chapter 2.8 — IEnumerable<T>
+- [ ] Chapter 2.9 — ICollection<T>
+- [ ] Chapter 2.10 — IList<T>
+- [ ] Chapter 2.11 — IReadOnlyCollection<T>
+- [ ] Chapter 2.12 — IReadOnlyList<T>
+- [ ] Chapter 2.13 — Choosing the right collection
+- [ ] Chapter 2.14 — Big-O characteristics
+- [ ] Chapter 2.15 — Hash tables and buckets
+- [ ] Chapter 2.16 — Dictionary collision handling
+- [ ] Chapter 2.17 — Interview questions
 
 ## Part 3 — Generics
 

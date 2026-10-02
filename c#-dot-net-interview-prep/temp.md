@@ -8,3 +8,9 @@ I am just collecting some topics here as I encounter them. Once the curriculum i
 1. with expressions
 1. S.O.L.I.D.
 1. Common methods: string.Compare(), string.Join(), etc.
+1. Enumerable.Range and other methods
+1. ref
+1. reflection
+1. Different sorting algorithms
+
+Sorting different collections
