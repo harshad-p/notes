@@ -56,24 +56,24 @@ This should be short. It's about **how to think**, not C# syntax.
 
 ## Part 2 — Collections
 
-- `Array`
-- `List<T>`
-- `Dictionary<TKey,TValue>`
-- `HashSet<T>`
-- `Queue<T>`
-- `Stack<T>`
-- `LinkedList<T>`
-- `IEnumerable<T>`
-- `ICollection<T>`
-- `IList<T>`
-- `IReadOnlyCollection<T>`
-- `IReadOnlyList<T>`
-- Choosing the right collection
-- Big-O characteristics
-- Hash tables and buckets
-- Dictionary collision handling
+### `Array`
+### `List<T>`
+### `Dictionary<TKey,TValue>`
+### `HashSet<T>`
+### `Queue<T>`
+### `Stack<T>`
+### `LinkedList<T>`
+### `IEnumerable<T>`
+### `ICollection<T>`
+### `IList<T>`
+### `IReadOnlyCollection<T>`
+### `IReadOnlyList<T>`
+### Choosing the right collection
+### Big-O characteristics
+### Hash tables and buckets
+### Dictionary collision handling
 
-**Interview questions:**
+### Interview questions
 
 - `Dictionary` vs `HashSet`
 - `List` vs `LinkedList`
