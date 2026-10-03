@@ -15,7 +15,7 @@
 
 - [x] Chapter 2.1 — Array
 - [x] Chapter 2.2 — List<T>
-- [ ] Chapter 2.3 — Dictionary<TKey,TValue>
+- [x] Chapter 2.3 — Dictionary<TKey,TValue>
 - [ ] Chapter 2.4 — HashSet<T>
 - [ ] Chapter 2.5 — Queue<T>
 - [ ] Chapter 2.6 — Stack<T>

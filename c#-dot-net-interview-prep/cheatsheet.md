@@ -38,3 +38,4 @@
 1. `employees[101] = "Charlie";`: If `101` doesn't exist, the indexer creates a new entry. This is different from `Add()`, which throws if the key already exists.
 1. The indexer adds a missing key or updates an existing key.
 1. `TryAdd()` returns `false` if the key already exists and doesn't overwrite its value.
+1. Adding duplicate key via Dictionary.Add() throws exception; Adding duplicate value via HashSet.Add() just ignores it. 
