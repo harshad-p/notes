@@ -13,5 +13,6 @@ I am just collecting some topics here as I encounter them. Once the curriculum i
 1. reflection
 1. Different sorting algorithms
 1. SortedHashMap. Missing Java Collections workarounds. 
+1. Count() vs. Count
 
 Sorting different collections

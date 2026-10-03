@@ -39,3 +39,4 @@
 1. The indexer adds a missing key or updates an existing key.
 1. `TryAdd()` returns `false` if the key already exists and doesn't overwrite its value.
 1. Adding duplicate key via Dictionary.Add() throws exception; Adding duplicate value via HashSet.Add() just ignores it. 
+1. `Queue<T>` uses an array-based circular buffer and maintains an index pointing to the front. It doesn't need to shift all remaining elements when removing the first item.
