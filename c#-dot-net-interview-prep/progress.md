@@ -17,7 +17,7 @@
 - [x] Chapter 2.2 — List<T>
 - [x] Chapter 2.3 — Dictionary<TKey,TValue>
 - [x] Chapter 2.4 — HashSet<T>
-- [ ] Chapter 2.5 — Queue<T>
+- [x] Chapter 2.5 — Queue<T>
 - [ ] Chapter 2.6 — Stack<T>
 - [ ] Chapter 2.7 — LinkedList<T>
 - [ ] Chapter 2.8 — IEnumerable<T>
