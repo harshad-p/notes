@@ -12,5 +12,6 @@ I am just collecting some topics here as I encounter them. Once the curriculum i
 1. ref
 1. reflection
 1. Different sorting algorithms
+1. SortedHashMap. Missing Java Collections workarounds. 
 
 Sorting different collections

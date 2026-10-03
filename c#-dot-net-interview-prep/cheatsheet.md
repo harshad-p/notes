@@ -35,3 +35,6 @@
 1. `TrimExcess()`: Reduces capacity when there is substantial unused space
 1. Even if you create a list with enough capacity, you still can't access an index beyond its current `Count`
 1. `EnsureCapacity(capacity)` doesn't shrink the list if the requested capacity is smaller than its current capacity.
+1. `employees[101] = "Charlie";`: If `101` doesn't exist, the indexer creates a new entry. This is different from `Add()`, which throws if the key already exists.
+1. The indexer adds a missing key or updates an existing key.
+1. `TryAdd()` returns `false` if the key already exists and doesn't overwrite its value.

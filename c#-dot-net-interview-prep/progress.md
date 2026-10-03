@@ -14,7 +14,7 @@
 ## Part 2 — Collections
 
 - [x] Chapter 2.1 — Array
-- [ ] Chapter 2.2 — List<T>
+- [x] Chapter 2.2 — List<T>
 - [ ] Chapter 2.3 — Dictionary<TKey,TValue>
 - [ ] Chapter 2.4 — HashSet<T>
 - [ ] Chapter 2.5 — Queue<T>
