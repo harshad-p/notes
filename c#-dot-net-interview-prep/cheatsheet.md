@@ -30,3 +30,8 @@
 1. `Array.IndexOf()` and `Array.LastIndexOf()`
 1. `Comparer<T>.Create()`
 1. stable sort
+1. `new List<int>(n)`: creates an empty list with capacity for at least `n` elements. It does not create a list containing `n` elements.
+1. `Capacity` is how many elements the internal storage array can hold before it needs to grow.
+1. `TrimExcess()`: Reduces capacity when there is substantial unused space
+1. Even if you create a list with enough capacity, you still can't access an index beyond its current `Count`
+1. `EnsureCapacity(capacity)` doesn't shrink the list if the requested capacity is smaller than its current capacity.

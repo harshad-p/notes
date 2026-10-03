@@ -13,7 +13,7 @@
 
 ## Part 2 — Collections
 
-- [ ] Chapter 2.1 — Array
+- [x] Chapter 2.1 — Array
 - [ ] Chapter 2.2 — List<T>
 - [ ] Chapter 2.3 — Dictionary<TKey,TValue>
 - [ ] Chapter 2.4 — HashSet<T>

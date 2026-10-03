@@ -72,6 +72,10 @@ This should be short. It's about **how to think**, not C# syntax.
 ### Big-O characteristics
 ### Hash tables and buckets
 ### Dictionary collision handling
+### Enumerator
+### Sorting
+### Scenarios for using each collection
+### Advantages and Disadvantages of each collection
 
 ### Interview questions
 
