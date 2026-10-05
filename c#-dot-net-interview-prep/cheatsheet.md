@@ -46,3 +46,12 @@
 1. Priority Queue internally maintains a heap
 1. `TryDequeue` and `TryPeek` in PQ gives you both element and priority as out params
 1. The queue's capacity and its count are different concepts, so clearing the queue does not mean that its allocated storage necessarily disappears.
+1. `Comparer<TPriority>.Default`
+1. `PriorityQueue<TElement, TPriority>` is implemented using a **priority heap**. More specifically, .NET uses an **array-backed quaternary min-heap**.
+1. A heap gives us: 
+`
+Peek    :  O(1)
+Dequeue :  O(log n)
+Enqueue :  O(log n)
+`
+1. Max-heap: `Comparer<int>.Create((x, y) => y.CompareTo(x))`
