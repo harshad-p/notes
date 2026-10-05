@@ -11,25 +11,48 @@
 - [x] Chapter 1.3 — Object-Oriented Programming
 - [x] Chapter 1.4 — Equality
 
-## Part 2 — Collections
+## Part 2 — Collections & Data Structures
 
 - [x] Chapter 2.1 — Array
 - [x] Chapter 2.2 — List<T>
 - [x] Chapter 2.3 — Dictionary<TKey,TValue>
 - [x] Chapter 2.4 — HashSet<T>
 - [x] Chapter 2.5 — Queue<T>
-- [ ] Chapter 2.6 — Stack<T>
-- [ ] Chapter 2.7 — LinkedList<T>
-- [ ] Chapter 2.8 — IEnumerable<T>
-- [ ] Chapter 2.9 — ICollection<T>
-- [ ] Chapter 2.10 — IList<T>
-- [ ] Chapter 2.11 — IReadOnlyCollection<T>
-- [ ] Chapter 2.12 — IReadOnlyList<T>
-- [ ] Chapter 2.13 — Choosing the right collection
-- [ ] Chapter 2.14 — Big-O characteristics
-- [ ] Chapter 2.15 — Hash tables and buckets
-- [ ] Chapter 2.16 — Dictionary collision handling
-- [ ] Chapter 2.17 — Interview questions
+- [x] Chapter 2.6 — Stack<T>
+- [x] Chapter 2.7 — PriorityQueue<TElement,TPriority>
+- [ ] Chapter 2.8 — LinkedList<T>
+- [ ] Chapter 2.9 — SortedSet<T>
+- [ ] Chapter 2.10 — SortedDictionary<TKey,TValue>
+- [ ] Chapter 2.11 — SortedList<TKey,TValue>
+- [ ] Chapter 2.12 — Deque — Double-Ended Queue
+- [ ] Chapter 2.13 — Heap
+- [ ] Chapter 2.14 — Binary Tree
+- [ ] Chapter 2.15 — Binary Search Tree
+- [ ] Chapter 2.16 — Balanced Trees
+- [ ] Chapter 2.17 — Graph
+- [ ] Chapter 2.18 — Trie
+- [ ] Chapter 2.19 — Disjoint Set / Union-Find
+- [ ] Chapter 2.20 — LRU Cache
+- [ ] Chapter 2.21 — IEnumerable<T>
+- [ ] Chapter 2.22 — ICollection<T>
+- [ ] Chapter 2.23 — IList<T>
+- [ ] Chapter 2.24 — ISet<T>
+- [ ] Chapter 2.25 — IReadOnlyCollection<T>
+- [ ] Chapter 2.26 — IReadOnlyList<T>
+- [ ] Chapter 2.27 — Choosing the Right Collection
+- [ ] Chapter 2.28 — Big-O Characteristics
+- [ ] Chapter 2.29 — Capacity, Resizing & Memory
+- [ ] Chapter 2.30 — Hash Tables & Buckets
+- [ ] Chapter 2.31 — Dictionary Collision Handling
+- [ ] Chapter 2.32 — Enumerators
+- [ ] Chapter 2.33 — Sorting & Comparers
+- [ ] Chapter 2.34 — Equality & Collections
+- [ ] Chapter 2.35 — Scenarios for Using Each Collection
+- [ ] Chapter 2.36 — Advantages & Disadvantages of Each Collection
+- [ ] Chapter 2.37 — Interview Questions - Core comparisons
+- [ ] Chapter 2.38 — Interview Questions - Complexity and implementation
+- [ ] Chapter 2.39 — Interview Questions - Interfaces and abstractions
+- [ ] Chapter 2.40 — Interview Questions - Practical scenarios
 
 ## Part 3 — Generics
 

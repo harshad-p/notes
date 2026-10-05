@@ -40,3 +40,9 @@
 1. `TryAdd()` returns `false` if the key already exists and doesn't overwrite its value.
 1. Adding duplicate key via Dictionary.Add() throws exception; Adding duplicate value via HashSet.Add() just ignores it. 
 1. `Queue<T>` uses an array-based circular buffer and maintains an index pointing to the front. It doesn't need to shift all remaining elements when removing the first item.
+1. `LinkedList<T>` is a **doubly linked list**.
+1. cache locality
+1. `var copy = new LinkedList<int>(original);` does not reuse the original nodes.
+1. Priority Queue internally maintains a heap
+1. `TryDequeue` and `TryPeek` in PQ gives you both element and priority as out params
+1. The queue's capacity and its count are different concepts, so clearing the queue does not mean that its allocated storage necessarily disappears.
